@@ -41,7 +41,7 @@ pipeline {
             steps {
                 sh '''
                     . /tmp/trip_duration_venv/bin/activate
-                    
+                    dvc --version
                     # Pull models from DVC tracking
                     dvc pull
                 '''

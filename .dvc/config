@@ -1,6 +1,6 @@
 [core]
     remote = local-remote
 [cache]
-    dir = /home/chirag/.dvc/cache
+    dir = /home/chirag/Projects/TRIP-DURATION-MODELS
 ['remote "local-remote"']
     url = /home/chirag/Projects/TRIP-DURATION-MODELS
