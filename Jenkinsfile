@@ -12,10 +12,11 @@ pipeline {
             steps {
                 // Create and activate Python virtual environment
                 sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install -U pip
-                    pip install -r requirements.txt
+                python3 -m venv /tmp/trip_duration_venv
+                source /tmp/trip_duration_venv/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt
+
                     pip install dvc
                 '''
             }
