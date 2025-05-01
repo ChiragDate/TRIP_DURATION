@@ -41,8 +41,6 @@ pipeline {
             steps {
                 sh '''
                     . /tmp/trip_duration_venv/bin/activate
-                    # Create models directory if it doesn't exist
-                    mkdir -p ${DVC_MODELS_DIR}
                     
                     # Pull models from DVC tracking
                     dvc pull
