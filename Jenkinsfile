@@ -25,7 +25,7 @@ pipeline {
         stage('Initialize DVC') {
             steps {
                 sh '''
-                    . venv/bin/activate
+                    . /tmp/trip_duration_venv/bin/activate
                     # Initialize DVC if not already done
                     if [ ! -d .dvc ]; then
                         dvc init
@@ -40,7 +40,7 @@ pipeline {
         stage('Pull Models') {
             steps {
                 sh '''
-                    . venv/bin/activate
+                    . /tmp/trip_duration_venv/bin/activate
                     # Create models directory if it doesn't exist
                     mkdir -p ${DVC_MODELS_DIR}
                     
@@ -53,7 +53,7 @@ pipeline {
         // stage('Run Code with Models') {
         //     steps {
         //         sh '''
-        //             . venv/bin/activate
+        //             . /tmp/trip_duration_venv/bin/activate
         //             # Run your code that uses the models
         //             python src/run_model.py
         //         '''
