@@ -54,16 +54,16 @@ pipeline {
             }
         }
         
-        // stage('Run Code with Models') {
-        //     steps {
-        //         sh '''
-        //             . ${VENV_PATH}/bin/activate
+        stage('Build Features and store csv') {
+            steps {
+                sh '''
+                    . ${VENV_PATH}/bin/activate
                     
-        //             # Run your code that uses the models
-        //             python src/run_model.py
-        //         '''
-        //     }
-        // }
+                    # Run your code that uses the models
+                    python3 src/features/build_features.py 
+                '''
+            }
+        }
         
         // stage('Track Model Changes') {
         //     steps {
