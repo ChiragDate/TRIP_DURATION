@@ -1,0 +1,17 @@
+{
+  "vendor_id": 1.0,
+  "passenger_count": 1.0,
+  "pickup_longitude": -73.98215,
+  "pickup_latitude": 40.762,
+  "dropoff_longitude": -73.9583,
+  "dropoff_latitude": 40.7152,
+  "passenger_count": 1.0,
+  "fare_amount": 3.8,
+  "extra": 4.2,
+  "mta_tax": 2.5,
+  "pickup_weekday": 1.0,
+  "pickup_hour": 14.0,
+  "pickup_minute": 30.0,
+  "pickup_dt": 1580000000.0,
+  "pickup_week_hour": 38.0
+}
