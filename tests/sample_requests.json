@@ -5,7 +5,6 @@
   "pickup_latitude": 40.762,
   "dropoff_longitude": -73.9583,
   "dropoff_latitude": 40.7152,
-  "passenger_count": 1.0,
   "fare_amount": 3.8,
   "extra": 4.2,
   "mta_tax": 2.5,
