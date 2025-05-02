@@ -6,6 +6,7 @@ pipeline {
         PYTHON_VERSION = '3.12.3'
         DVC_MODELS_DIR = "/home/chirag/Projects/TRIP-DURATION-MODELS"
         VENV_PATH = "${WORKSPACE}/trip_duration_venv"
+        WORK = "${WORKSPACE}"
     }
     
     stages {
@@ -60,7 +61,7 @@ pipeline {
                     . ${VENV_PATH}/bin/activate
                     
                     # Run your code that uses the models
-                    python3 src/features/build_features.py '${WORKSPACE}/data/raw/' 
+                    python3 src/features/build_features.py ${WORK}/data/raw/
                 '''
             }
         }
