@@ -106,9 +106,11 @@ pipeline {
                     python -m pytest ${WORK}/tests/test_api.py -v
                     
                     # Test with a sample prediction request
-                    curl -s -X POST http://localhost:8000/predict \\
-                        -H "Content-Type: application/json" \\
-                        -d @${WORK}/tests/sample_request.json | tee prediction_output.json
+                    curl -s -X POST http://localhost:8000/predict \
+                    -H "Content-Type: application/json" \
+                    --data "@/var/lib/jenkins/workspace/TRIP_DURATION/tests/sample_request.json" \
+                    | tee prediction_output.json
+
                     
                     # Validate the prediction output format
                     python -c "import json; data = json.load(open('prediction_output.json')); assert 'prediction' in data, 'Missing prediction key in response'"
