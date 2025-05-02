@@ -85,7 +85,7 @@ pipeline {
                     . ${VENV_PATH}/bin/activate
 
                     # Start FastAPI using uvicorn
-                    nohup uvicorn src.api.service:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
+                    nohup uvicorn src.service:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
 
                     echo $! > api_pid.txt
 
@@ -95,7 +95,6 @@ pipeline {
                     # Check if API is running
                     if ! curl -s http://localhost:8000/health; then
                     echo "FASTAPI is not running"
-                    cat api.log
                     exit 1
                     fi
                 '''
