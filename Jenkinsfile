@@ -65,6 +65,14 @@ pipeline {
                 '''
             }
         }
+                stage('Train Model') {
+            steps {
+                sh '''
+                    . ${VENV_PATH}/bin/activate
+                    python3 ${WORK}/src/models/train_model.py ${WORK}/data/processed/train.csv ${WORK}/models
+                '''
+            }
+        }
         
         // stage('Track Model Changes') {
         //     steps {

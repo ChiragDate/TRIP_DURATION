@@ -16,7 +16,7 @@ def train_model(train_features, target, n_estimators, max_depth, seed):
 
 def save_model(model, output_path):
     # Save the trained model to the specified output path
-    joblib.dump(model, output_path + 'models/model.joblib')
+    joblib.dump(model, output_path + '/model.joblib')
 
 def main():
 
@@ -26,9 +26,9 @@ def main():
     params = yaml.safe_load(open(params_file))["train_model"]
 
     input_file = sys.argv[1]
-    data_path = home_dir.as_posix() +"/" + input_file
+    data_path =  input_file 
     print(f"Data: {data_path}")
-    output_path = home_dir.as_posix() + '/models'
+    output_path = sys.argv[2]
     print(f"Output_path: {output_path}")
     
     pathlib.Path(output_path).mkdir(parents=True, exist_ok=True)
