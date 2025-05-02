@@ -50,7 +50,7 @@ pipeline {
                     dvc --version
                     
                     # Pull models from DVC tracking
-                    dvc pull
+                    dvc pull --force
                 '''
             }
         }
