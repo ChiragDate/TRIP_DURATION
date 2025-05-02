@@ -29,7 +29,7 @@ class PredictionInput(BaseModel):
     pickup_week_hour:float
 
 # Load the pre-trained RandomForest model
-model_path = "C:/Users/cdate/Documents/Chirag/MachineLearning/Trip-Duration/trip-duration/models/model.joblib"
+model_path = "/var/lib/jenkins/workspace/TRIP_DURATION/models/model.joblib"
 model = load(model_path)
 
 @app.get("/")
