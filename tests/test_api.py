@@ -68,29 +68,26 @@ def test_predict_endpoint(sample_input_data):
 
 def test_predict_processing(sample_input_object):
     """Test the prediction function correctly processes input data."""
-    # Set specific return value for this test
     mock_model.predict.return_value = np.array([987.65])
-    
+
     with patch('src.service.model', mock_model):
-        # Call the endpoint
+        mock_model.predict.reset_mock()  # ✅ Reset the call count
+
         response = client.post(
             "/predict",
-            json=sample_input_object.dict()
+            json=sample_input_object.model_dump()  
         )
-        
-        # Check the model was called with the correct features
+
+        # ✅ Now it's safe to assert
         mock_model.predict.assert_called_once()
-        
-        # Get the arguments the mock was called with
+
         args, _ = mock_model.predict.call_args
-        
-        # Verify the feature list is in the expected format
-        assert len(args[0][0]) == 15  # Should have 15 features
+
+        assert len(args[0][0]) == 15
         assert args[0][0][0] == sample_input_object.vendor_id
         assert args[0][0][1] == sample_input_object.passenger_count
-        
-        # Verify the response
         assert response.json()["prediction"] == 987.65
+
 
 def test_predict_with_invalid_data():
     """Test the prediction endpoint with invalid data."""
