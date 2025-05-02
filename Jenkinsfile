@@ -3,7 +3,7 @@ pipeline {
     
     environment {
         // Define environment variables
-        PYTHON_VERSION = '3.10.1'
+        PYTHON_VERSION = '3.12.3'
         DVC_MODELS_DIR = "/home/chirag/Projects/TRIP-DURATION-MODELS"
         VENV_PATH = "${WORKSPACE}/trip_duration_venv"
     }
@@ -38,11 +38,6 @@ pipeline {
                     fi
                     
                     # Configure DVC to use local directory for models
-                    mkdir -p ${DVC_MODELS_DIR}
-                    dvc config cache.dir ${DVC_MODELS_DIR}
-                    
-                    # Make sure Jenkins has write permissions to the models directory
-                    chmod -R 755 ${DVC_MODELS_DIR}
                 '''
             }
         }
