@@ -15,4 +15,3 @@ pyyaml
 pytest
 numpy
 httpx
-src.api
