@@ -1,0 +1,10 @@
+make_dataset:
+  test_split: 0.2
+  seed: 2023
+train_model:
+  seed: 21
+  n_estimators: 50
+  max_depth: 8
+
+
+# gdrive folder id 1lYq599EnKw9wX928MTJjTAtLAlbnbZjd
