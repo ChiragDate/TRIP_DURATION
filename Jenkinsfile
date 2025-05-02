@@ -79,23 +79,29 @@ pipeline {
                 '''
             }
         }
-                stage('Run API Service') {
+        stage('Run API Service') {
             steps {
                 sh '''
                     . ${VENV_PATH}/bin/activate
-                    
-                    nohup python ${WORKSPACE}/src/api/service.py > api.log 2>&1 &
-                    
+
+                    # Start FastAPI using uvicorn
+                    nohup uvicorn src.api.service:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
+
                     echo $! > api_pid.txt
-                    
+
                     # Wait for API to start
                     sleep 5
-                    
+
                     # Check if API is running
-                    curl -s http://localhost:8000/health || echo "API failed to start"
+                    if ! curl -s http://localhost:8000/health; then
+                    echo "FASTAPI is not running"
+                    cat api.log
+                    exit 1
+                    fi
                 '''
             }
         }
+
         
         stage('Test API') {
             steps {
