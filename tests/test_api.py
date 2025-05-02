@@ -47,7 +47,7 @@ def sample_input_object(sample_input_data):
 @pytest.fixture(autouse=True)
 def setup_mock_model():
     """Patch the model for all tests."""
-    with patch('src.api.service.model', mock_model):
+    with patch('src.service.model', mock_model):
         yield
 
 def test_home_endpoint():
@@ -71,7 +71,7 @@ def test_predict_processing(sample_input_object):
     # Set specific return value for this test
     mock_model.predict.return_value = np.array([987.65])
     
-    with patch('src.api.service.model', mock_model):
+    with patch('src.service.model', mock_model):
         # Call the endpoint
         response = client.post(
             "/predict",
@@ -140,7 +140,7 @@ def test_health_endpoint():
 
 def test_model_loading_error():
     """Test handling of model loading errors."""
-    with patch('src.api.service.load', side_effect=Exception("Model not found")):
+    with patch('src.service.load', side_effect=Exception("Model not found")):
         # This would fail when importing the module, which is caught by pytest
         pass
 
