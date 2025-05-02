@@ -13,7 +13,7 @@
   "pickup_minute": 30.0,
   "pickup_dt": 1580000000.0,
   "pickup_week_hour": 38.0,
-  "store_and_fwd_flag": "N",
+  "store_and_fwd_flag": 0.0,
   "distance_haversine": 2.0,
   "distance_dummy_manhattan": 2.3,
   "direction": 155.0
