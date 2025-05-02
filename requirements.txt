@@ -14,3 +14,4 @@ dvc
 pyyaml
 pytest
 numpy
+httpx
