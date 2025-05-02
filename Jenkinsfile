@@ -69,7 +69,13 @@ pipeline {
             steps {
                 sh '''
                     . ${VENV_PATH}/bin/activate
-                    python3 ${WORK}/src/models/train_model.py ${WORK}/data/processed/train.csv ${WORK}/models
+
+                    if [ -f ""${WORK}/models/model.joblib"" ]; then
+                        echo "Model already exists at $MODEL_FILE - skipping training"
+                    else
+                        echo "Model not found - starting training process"
+                        python3 ${WORK}/src/models/train_model.py ${WORK}/data/processed/train.csv ${WORK}/models
+                    fi
                 '''
             }
         }
