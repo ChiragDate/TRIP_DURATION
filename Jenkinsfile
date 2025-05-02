@@ -65,7 +65,7 @@ pipeline {
                 '''
             }
         }
-                stage('Train Model') {
+            stage('Train Model') {
             steps {
                 sh '''
                     . ${VENV_PATH}/bin/activate
@@ -79,7 +79,46 @@ pipeline {
                 '''
             }
         }
+                stage('Run API Service') {
+            steps {
+                sh '''
+                    . ${VENV_PATH}/bin/activate
+                    
+                    nohup python ${WORKSPACE}/src/api/service.py > api.log 2>&1 &
+                    
+                    echo $! > api_pid.txt
+                    
+                    # Wait for API to start
+                    sleep 5
+                    
+                    # Check if API is running
+                    curl -s http://localhost:8000/health || echo "API failed to start"
+                '''
+            }
+        }
         
+        stage('Test API') {
+            steps {
+                sh '''
+                    . ${VENV_PATH}/bin/activate
+                    
+                    # Run API tests
+                    python -m pytest ${WORK}/tests/test_api.py -v
+                    
+                    # Test with a sample prediction request
+                    curl -s -X POST http://localhost:8000/predict \\
+                        -H "Content-Type: application/json" \\
+                        -d @${WORK}/tests/sample_request.json | tee prediction_output.json
+                    
+                    # Validate the prediction output format
+                    python -c "import json; data = json.load(open('prediction_output.json')); assert 'prediction' in data, 'Missing prediction key in response'"
+                    
+                    # Cleanup API process
+                    kill $(cat api_pid.txt)
+                    rm api_pid.txt
+                '''
+            }
+        }
         // stage('Track Model Changes') {
         //     steps {
         //         sh '''
