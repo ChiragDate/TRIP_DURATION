@@ -7,9 +7,9 @@ from unittest.mock import patch, MagicMock
 import numpy as np
 
 # Add the directory containing main.py to the path]
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
-from src.api.service import app, PredictionInput
+
+from src.service import app, PredictionInput
 
 # Create a test client
 client = TestClient(app)
