@@ -146,19 +146,19 @@ pipeline {
                 '''
             }
         }
-        stage('Push Docker Image') {
-            steps {
-                // Using withDockerRegistry instead of withCredentials
-                withDockerRegistry([credentialsId: "${DOCKER_CREDENTIALS_ID}"]) {
-                    sh """
-                        echo "Pushing image to Docker Hub..."
-                        docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-                        docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
-                        echo "Docker push completed successfully"
-                    """
-                }
+    stage('Push Docker Image') {
+        steps {
+            // Using withDockerRegistry instead of withCredentials
+            withDockerRegistry([credentialsId: "${DOCKER_CREDENTIALS_ID}", url: '']) {
+                sh """
+                    echo "Pushing image to Docker Hub..."
+                    docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                    docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                    echo "Docker push completed successfully"
+                """
             }
         }
+    }
         // stage('Push Docker Image') {
         //     steps {
         //         withCredentials([string(credentialsId: "${DOCKER_CREDENTIALS_ID}")]) {
