@@ -158,6 +158,7 @@ pipeline {
                     """
                 }
             }
+        }
         // stage('Push Docker Image') {
         //     steps {
         //         withCredentials([string(credentialsId: "${DOCKER_CREDENTIALS_ID}")]) {
