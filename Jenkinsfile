@@ -7,6 +7,9 @@ pipeline {
         DVC_MODELS_DIR = "/home/chirag/Projects/TRIP-DURATION-MODELS"
         VENV_PATH = "${WORKSPACE}/trip_duration_venv"
         WORK = "${WORKSPACE}"
+        DOCKER_REGISTRY = "docker.io/chiragd02"
+        IMAGE_NAME = "trip_duration"
+        IMAGE_TAG = "latest"
     }
     
     stages {
@@ -124,6 +127,17 @@ pipeline {
                     # Cleanup API process
                     kill $(cat api_pid.txt)
                     rm api_pid.txt
+                '''
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                    # Build Docker image
+                    docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .
+                    
+                    # Also tag as latest
+                    docker tag ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
                 '''
             }
         }
