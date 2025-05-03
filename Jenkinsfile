@@ -10,6 +10,8 @@ pipeline {
         DOCKER_REGISTRY = "docker.io/chiragd02"
         IMAGE_NAME = "trip_duration"
         IMAGE_TAG = "latest"
+        DOCKER_CREDENTIALS_ID = "DOCKERHUB"
+        KUBECONFIG_ID = "kubeconfig-credentials"
     }
     
     stages {
@@ -143,7 +145,7 @@ pipeline {
         }
         stage('Push Docker Image') {
             steps {
-                withCredentials([string(credentialsId: "${DOCKER_CREDENTIALS_ID}", variable: "${DOCKER_PASSWORD}")]) {
+                withCredentials([string(credentialsId: "${DOCKER_CREDENTIALS_ID}", variable: 'DOCKER_PASSWORD')]) {
                     sh '''
                         # Login to Docker registry
                         echo ${DOCKER_PASSWORD} | docker login ${DOCKER_REGISTRY} -u jenkins --password-stdin
