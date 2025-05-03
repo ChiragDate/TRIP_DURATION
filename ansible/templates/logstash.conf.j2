@@ -1,0 +1,31 @@
+input {
+  beats {
+    port => 5044
+  }
+}
+
+filter {
+  if [fields][service] == "trip-duration-api" {
+    json {
+      source => "message"
+    }
+    
+    # Extract request information
+    grok {
+      match => { "message" => "%{COMBINEDAPACHELOG}" }
+    }
+    
+    # Parse timestamps
+    date {
+      match => [ "timestamp", "dd/MMM/yyyy:HH:mm:ss Z" ]
+      target => "@timestamp"
+    }
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["localhost:9200"]
+    index => "trip-duration-api-%{+YYYY.MM.dd}"
+  }
+}

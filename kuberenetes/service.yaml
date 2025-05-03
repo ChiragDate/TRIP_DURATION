@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: trip-duration-api-service
+spec:
+  selector:
+    app: trip-duration-api
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: trip-duration-api-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: trip-duration.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: trip-duration-api-service
+            port:
+              number: 80

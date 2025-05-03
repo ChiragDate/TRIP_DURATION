@@ -1,0 +1,122 @@
+---
+- name: Install ELK Stack
+  hosts: elk_stack
+  become: true
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+        update_cache: yes
+
+    - name: Add Elastic GPG key
+      apt_key:
+        url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        state: present
+
+    - name: Add Elastic repository
+      apt_repository:
+        repo: deb https://artifacts.elastic.co/packages/8.x/apt stable main
+        state: present
+        
+    - name: Increase virtual memory for Elasticsearch
+      sysctl:
+        name: vm.max_map_count
+        value: '262144'
+        state: present
+        reload: yes
+
+    - name: Install Elasticsearch
+      apt:
+        name: elasticsearch
+        state: present
+        update_cache: yes
+
+    - name: Configure Elasticsearch
+      template:
+        src: templates/elasticsearch.yml.j2
+        dest: /etc/elasticsearch/elasticsearch.yml
+      notify: restart elasticsearch
+
+    - name: Install Kibana
+      apt:
+        name: kibana
+        state: present
+
+    - name: Configure Kibana
+      template:
+        src: templates/kibana.yml.j2
+        dest: /etc/kibana/kibana.yml
+      notify: restart kibana
+
+    - name: Install Logstash
+      apt:
+        name: logstash
+        state: present
+
+    - name: Configure Logstash
+      template:
+        src: templates/logstash.conf.j2
+        dest: /etc/logstash/conf.d/logstash.conf
+      notify: restart logstash
+
+    - name: Install Filebeat
+      apt:
+        name: filebeat
+        state: present
+
+    - name: Configure Filebeat
+      template:
+        src: templates/filebeat.yml.j2
+        dest: /etc/filebeat/filebeat.yml
+      notify: restart filebeat
+
+    - name: Enable and start Elasticsearch
+      service:
+        name: elasticsearch
+        state: started
+        enabled: yes
+
+    - name: Enable and start Kibana
+      service:
+        name: kibana
+        state: started
+        enabled: yes
+
+    - name: Enable and start Logstash
+      service:
+        name: logstash
+        state: started
+        enabled: yes
+
+    - name: Enable and start Filebeat
+      service:
+        name: filebeat
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: restart elasticsearch
+      service:
+        name: elasticsearch
+        state: restarted
+
+    - name: restart kibana
+      service:
+        name: kibana
+        state: restarted
+
+    - name: restart logstash
+      service:
+        name: logstash
+        state: restarted
+
+    - name: restart filebeat
+      service:
+        name: filebeat
+        state: restarted
