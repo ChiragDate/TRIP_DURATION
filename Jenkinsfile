@@ -145,7 +145,7 @@ pipeline {
         }
         stage('Push Docker Image') {
             steps {
-                withCredentials([string(credentialsId: "${DOCKER_CREDENTIALS_ID}", variable: 'DOCKER_PASSWORD')]) {
+                withCredentials([string(credentialsId: "${DOCKER_CREDENTIALS_ID}")]) {
                     sh '''
                         # Login to Docker registry
                         echo ${DOCKER_PASSWORD} | docker login ${DOCKER_REGISTRY} -u jenkins --password-stdin
