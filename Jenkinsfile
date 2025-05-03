@@ -28,9 +28,9 @@ pipeline {
                     . ${VENV_PATH}/bin/activate
                     pip install --upgrade pip
                     pip install -r requirements.txt
-                    apt-get install -y docker.io
-                    systemctl start docker
-                    systemctl enable docker
+                    sudo apt-get install -y docker.io
+                    sudo systemctl start docker
+                    sudo systemctl enable docker
                     pip install dvc
                 '''
             }
