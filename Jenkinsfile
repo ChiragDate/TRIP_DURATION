@@ -145,18 +145,63 @@ pipeline {
         }
         stage('Push Docker Image') {
             steps {
-                withCredentials([string(credentialsId: "${DOCKER_CREDENTIALS_ID}")]) {
+                echo "Starting Docker image push stage"
+                
+                withCredentials([string(credentialsId: "${DOCKER_CREDENTIALS_ID}", variable: 'DOCKER_PASSWORD')]) {
                     sh '''
-                        # Login to Docker registry
-                        echo ${DOCKER_PASSWORD} | docker login ${DOCKER_REGISTRY} -u jenkins --password-stdin
+                        # Redirect stderr to stdout so all output appears in the console
+                        exec 2>&1
                         
-                        # Push Docker image
+                        echo "=== Docker Login ==="
+                        echo ${DOCKER_PASSWORD} | docker login ${DOCKER_REGISTRY} -u jenkins --password-stdin
+                        LOGIN_STATUS=$?
+                        if [ $LOGIN_STATUS -ne 0 ]; then
+                            echo "Docker login failed with exit code: $LOGIN_STATUS"
+                            exit $LOGIN_STATUS
+                        fi
+                        
+                        echo "=== Docker Push Tagged Image ==="
                         docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                        PUSH1_STATUS=$?
+                        if [ $PUSH1_STATUS -ne 0 ]; then
+                            echo "Docker push of tagged image failed with exit code: $PUSH1_STATUS"
+                            exit $PUSH1_STATUS
+                        fi
+                        
+                        echo "=== Docker Push Latest Image ==="
                         docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                        PUSH2_STATUS=$?
+                        if [ $PUSH2_STATUS -ne 0 ]; then
+                            echo "Docker push of latest image failed with exit code: $PUSH2_STATUS"
+                            exit $PUSH2_STATUS
+                        fi
+                        
+                        echo "All Docker commands completed successfully"
                     '''
+                }
+                
+                echo "Docker image push stage completed"
+            }
+            post {
+                failure {
+                    echo "Docker image push stage failed - check system configuration"
                 }
             }
         }
+        // stage('Push Docker Image') {
+        //     steps {
+        //         withCredentials([string(credentialsId: "${DOCKER_CREDENTIALS_ID}")]) {
+        //             sh '''
+        //                 # Login to Docker registry
+        //                 echo ${DOCKER_PASSWORD} | docker login ${DOCKER_REGISTRY} -u jenkins --password-stdin
+                        
+        //                 # Push Docker image
+        //                 docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+        //                 docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+        //             '''
+        //         }
+        //     }
+        // }
         // stage('Track Model Changes') {
         //     steps {
         //         sh '''
