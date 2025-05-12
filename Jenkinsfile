@@ -200,21 +200,33 @@ pipeline {
         
         stage('Deploy to Kubernetes') {
             steps {
-                sh '''
-                    # Replace placeholders in Kubernetes manifests
-                    sed -i "s|\${DOCKER_REGISTRY}|${DOCKER_REGISTRY}|g" kubernetes/deployment.yaml
-                    sed -i "s|\${IMAGE_TAG}|${IMAGE_TAG}|g" kubernetes/deployment.yaml
-                    
-                    # Apply Kubernetes manifests using default kubeconfig
-                    kubectl apply -f kubernetes/pvc.yaml
-                    kubectl apply -f kubernetes/deployment.yaml
-                    kubectl apply -f kubernetes/service.yaml
-                    
-                    # Wait for deployment to be ready
-                    kubectl rollout status deployment/trip-duration-api
-                '''
+                script {
+                    def deploymentExists = sh(
+                        script: "kubectl get deployment trip-duration-api >/dev/null 2>&1",
+                        returnStatus: true
+                    ) == 0
+
+                    if (deploymentExists) {
+                        echo "Deployment 'trip-duration-api' already exists."
+                    } else {
+                        sh '''
+                            # Replace placeholders in Kubernetes manifests
+                            sed -i "s|\${DOCKER_REGISTRY}|${DOCKER_REGISTRY}|g" kubernetes/deployment.yaml
+                            sed -i "s|\${IMAGE_TAG}|${IMAGE_TAG}|g" kubernetes/deployment.yaml
+                            
+                            # Apply Kubernetes manifests using default kubeconfig
+                            kubectl apply -f kubernetes/pvc.yaml
+                            kubectl apply -f kubernetes/deployment.yaml
+                            kubectl apply -f kubernetes/service.yaml
+                            
+                            # Wait for deployment to be ready
+                            kubectl rollout status deployment/trip-duration-api
+                        '''
+                    }
+                }
             }
         }
+
 
     }
     
