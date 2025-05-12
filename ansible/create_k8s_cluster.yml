@@ -124,9 +124,11 @@
 
     - name: Save kubeconfig to file
       copy:
-        content: "{{ kubeconfig_content.stdout }}"
+        content: "{{ kubeconfig_content.stdout | default('') }}"
         dest: "{{ playbook_dir }}/../kubeconfig"
         mode: '0600'
+      when: kubeconfig_content is defined and kubeconfig_content.stdout is defined
+
 
     - name: Verify cluster is running
       shell: kubectl --kubeconfig={{ playbook_dir }}/../kubeconfig get nodes
