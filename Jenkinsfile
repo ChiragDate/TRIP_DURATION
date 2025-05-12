@@ -12,6 +12,8 @@ pipeline {
         IMAGE_TAG = "latest"
         DOCKER_CREDENTIALS_ID = "DOCKERHUB"
         KUBECONFIG_ID = "kubeconfig-credentials"
+        ANSIBLE_PATH = "${WORKSPACE}/ansible"
+        K8S_CLUSTER_NAME = "ml-pipeline-cluster"
     }
     
     stages {
@@ -31,10 +33,42 @@ pipeline {
                     sudo apt-get install -y docker.io
                     sudo systemctl start docker
                     sudo systemctl enable docker
-                    pip install dvc
+                    pip install dvc ansible
                 '''
             }
         }
+        
+       stage('Check and Create Kubernetes Cluster') {
+            steps {
+                script {
+                    def clusterExists = false
+
+                    // Try to get the cluster info using default kubeconfig
+                    try {
+                        def status = sh(script: "kubectl cluster-info", returnStatus: true)
+                        clusterExists = (status == 0)
+                    } catch (Exception e) {
+                        echo "Failed to get cluster info: ${e.message}"
+                        clusterExists = false
+                    }
+
+                    if (!clusterExists) {
+                        echo "Kubernetes cluster does not exist. Creating using Ansible..."
+                        sh '''
+                            cd ${ANSIBLE_PATH}
+                            ansible-playbook -i hosts.ini create_k8s_cluster.yml -e "cluster_name=${K8S_CLUSTER_NAME}"
+
+                            # After creating the cluster, store the kubeconfig
+                            mkdir -p ~/.kube
+                            cp ${ANSIBLE_PATH}/kubeconfig ~/.kube/config
+                        '''
+                    } else {
+                        echo "Kubernetes cluster already exists. Skipping creation."
+                    }
+                }
+            }
+        }
+
         
         stage('Initialize DVC') {
             steps {
@@ -73,12 +107,13 @@ pipeline {
                 '''
             }
         }
-            stage('Train Model') {
+        
+        stage('Train Model') {
             steps {
                 sh '''
                     . ${VENV_PATH}/bin/activate
 
-                    if [ -f ""${WORK}/models/model.joblib"" ]; then
+                    if [ -f "${WORK}/models/model.joblib" ]; then
                         echo "Model already exists at $MODEL_FILE - skipping training"
                     else
                         echo "Model not found - starting training process"
@@ -87,6 +122,7 @@ pipeline {
                 '''
             }
         }
+        
         stage('Run API Service') {
             steps {
                 sh '''
@@ -102,8 +138,8 @@ pipeline {
 
                     # Check if API is running
                     if ! curl -s http://localhost:8000/health; then
-                    echo "FASTAPI is not running"
-                    exit 1
+                        echo "FASTAPI is not running"
+                        exit 1
                     fi
                 '''
             }
@@ -135,6 +171,7 @@ pipeline {
                 '''
             }
         }
+        
         stage('Build Docker Image') {
             steps {
                 sh '''
@@ -146,54 +183,46 @@ pipeline {
                 '''
             }
         }
-    stage('Push Docker Image') {
-        steps {
-            // Using withDockerRegistry instead of withCredentials
-            withDockerRegistry([credentialsId: "${DOCKER_CREDENTIALS_ID}", url: '']) {
-                sh """
-                    echo "Pushing image to Docker Hub..."
-                    docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-                    docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
-                    echo "Docker push completed successfully"
-                """
+        
+        stage('Push Docker Image') {
+            steps {
+                // Using withDockerRegistry instead of withCredentials
+                withDockerRegistry([credentialsId: "${DOCKER_CREDENTIALS_ID}", url: '']) {
+                    sh """
+                        echo "Pushing image to Docker Hub..."
+                        docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                        docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                        echo "Docker push completed successfully"
+                    """
+                }
             }
         }
-    }
-        // stage('Push Docker Image') {
-        //     steps {
-        //         withCredentials([string(credentialsId: "${DOCKER_CREDENTIALS_ID}")]) {
-        //             sh '''
-        //                 # Login to Docker registry
-        //                 echo ${DOCKER_PASSWORD} | docker login ${DOCKER_REGISTRY} -u jenkins --password-stdin
-                        
-        //                 # Push Docker image
-        //                 docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-        //                 docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
-        //             '''
-        //         }
-        //     }
-        // }
-        // stage('Track Model Changes') {
-        //     steps {
-        //         sh '''
-        //             . ${VENV_PATH}/bin/activate
+        
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh '''
+                    # Replace placeholders in Kubernetes manifests
+                    sed -i "s|\${DOCKER_REGISTRY}|${DOCKER_REGISTRY}|g" kubernetes/deployment.yaml
+                    sed -i "s|\${IMAGE_TAG}|${IMAGE_TAG}|g" kubernetes/deployment.yaml
                     
-        //             # Add any new model outputs to DVC tracking
-        //             dvc add models/new_output_model.pkl
+                    # Apply Kubernetes manifests using default kubeconfig
+                    kubectl apply -f kubernetes/pvc.yaml
+                    kubectl apply -f kubernetes/deployment.yaml
+                    kubectl apply -f kubernetes/service.yaml
                     
-        //             # Commit DVC changes
-        //             git add .dvc/config models/*.dvc
-        //             git commit -m "Update model tracking" || echo "No changes to commit"
-        //         '''
-        //     }
-        // }
+                    # Wait for deployment to be ready
+                    kubectl rollout status deployment/trip-duration-api
+                '''
+            }
+        }
+
     }
     
-    // post {
-    //     always {
-    //         echo "Pipeline completed"
-    //         // Uncomment if you want workspace cleanup
-    //         // cleanWs()
-    //     }
-    // }
+    post {
+        always {
+            echo "Pipeline completed"
+            // Uncomment if you want workspace cleanup
+            // cleanWs()
+        }
+    }
 }
