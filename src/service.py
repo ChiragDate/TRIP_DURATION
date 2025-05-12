@@ -1,20 +1,13 @@
 # main.py
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from joblib import load
 from pydantic import BaseModel
-import logging
-import os
-import time
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),  # Log to stdout
-        logging.FileHandler("/var/log/trip-duration-api.log")  # Log to file
-    ]
-)
+app = FastAPI()
+
+import logging
+
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class PredictionInput(BaseModel):
@@ -35,103 +28,37 @@ class PredictionInput(BaseModel):
     pickup_dt:float
     pickup_week_hour:float
 
-app = FastAPI(
-    title="Trip Duration Prediction API",
-    description="API for predicting trip durations using machine learning models",
-    version="1.0.0"
-)
-
-# Startup event to load the model
-@app.on_event("startup")
-async def startup_event():
-    global model
-    model_path = os.getenv("MODEL_PATH", "/app/models/model.joblib")
-    logger.info(f"Loading model from {model_path}")
-    try:
-        model = load(model_path)
-        logger.info("Model loaded successfully")
-    except Exception as e:
-        logger.error(f"Failed to load model: {str(e)}")
-        raise e
+# Load the pre-trained RandomForest model
+model_path = "/var/lib/jenkins/workspace/TRIP_DURATION/models/model.joblib"
+model = load(model_path)
 
 @app.get("/")
 def home():
-    return {"message": "Trip Duration Prediction API is running"}
-
-@app.get("/health")
-def health_check():
-    """Health check endpoint for Kubernetes liveness and readiness probes"""
-    try:
-        # Check if model is loaded
-        if 'model' not in globals():
-            raise HTTPException(status_code=503, detail="Model not loaded")
-        
-        # Additional health checks can be added here
-        return {
-            "status": "healthy",
-            "timestamp": time.time()
-        }
-    except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
-        raise HTTPException(status_code=503, detail=str(e))
+    return "Working fine"
 
 @app.post("/predict")
 def predict(input_data: PredictionInput):
-    """
-    Make a trip duration prediction based on the input data
-    """
-    logger.info("Received prediction request")
-    try:
-        # Extract features from input_data and make predictions using the loaded model
-        features = [input_data.vendor_id,
-                    input_data.passenger_count,
-                    input_data.pickup_longitude,
-                    input_data.pickup_latitude,
-                    input_data.dropoff_longitude,
-                    input_data.dropoff_latitude,
-                    input_data.store_and_fwd_flag,
-                    input_data.distance_haversine,
-                    input_data.distance_dummy_manhattan,
-                    input_data.direction,
-                    input_data.pickup_weekday,
-                    input_data.pickup_hour,
-                    input_data.pickup_minute,
-                    input_data.pickup_dt,
-                    input_data.pickup_week_hour
-                    ]
-        
-        # Log the input features for debugging
-        logger.debug(f"Input features: {features}")
-        
-        # Make prediction
-        start_time = time.time()
-        prediction = model.predict([features])[0].item()
-        prediction_time = time.time() - start_time
-        
-        # Log the prediction and time taken
-        logger.info(f"Prediction: {prediction}, Time taken: {prediction_time:.4f}s")
-        
-        # Return the prediction
-        return {"prediction": prediction, "prediction_time_ms": prediction_time * 1000}
-    except Exception as e:
-        logger.error(f"Prediction error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
-
-@app.get("/metrics")
-def metrics():
-    """
-    Endpoint for Prometheus metrics
-    """
-    # In a real implementation, you would use a proper Prometheus client
-    # This is a simplified example
-    return {
-        "model_name": "trip_duration_predictor",
-        "model_version": "1.0.0",
-        "request_count": 0,  # These would be actual metrics from a Prometheus client
-        "prediction_time_avg_ms": 0,
-        "prediction_error_count": 0
-    }
+    # Extract features from input_data and make predictions using the loaded model
+    features = [input_data.vendor_id,
+                input_data.passenger_count,
+                input_data.pickup_longitude,
+                input_data.pickup_latitude,
+                input_data.dropoff_longitude,
+                input_data.dropoff_latitude,
+                input_data.store_and_fwd_flag,
+                input_data.distance_haversine,
+                input_data.distance_dummy_manhattan,
+                input_data.direction,
+                input_data.pickup_weekday,
+                input_data.pickup_hour,
+                input_data.pickup_minute,
+                input_data.pickup_dt,
+                input_data.pickup_week_hour
+                ]
+    prediction = model.predict([features])[0].item()
+    # Return the prediction
+    return {"prediction": prediction}
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="localhost", port=8000)
