@@ -10,8 +10,11 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler(),  # Log to stdout
-        logging.FileHandler("/var/log/trip-duration-api.log", mode='a+')  # Log to file
+        logging.StreamHandler(),
+        from pathlib import Path
+        log_path = Path(__file__).parent.parent / "logs/trip-duration-api.log"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        logging.FileHandler(log_path, mode='a+')
     ]
 )
 logger = logging.getLogger(__name__)
