@@ -4,7 +4,6 @@ from pydantic import BaseModel
 import logging
 import os
 import time
-from pathlib import Path
 
 # Configure logging
 logging.basicConfig(
@@ -12,7 +11,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        log_path = Path(__file__).parent.parent / "logs/trip-duration-api.log"
+        log_path = "/var/lib/jenkins/workspace/TRIP_DURATION/logs/trip-duration-api.log"
         log_path.parent.mkdir(parents=True, exist_ok=True)
         logging.FileHandler(log_path, mode='a+')
     ]
