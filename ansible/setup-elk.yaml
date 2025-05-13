@@ -3,7 +3,12 @@
   hosts: elk_stack
   become: true
   tasks:
-    - name: Install required packages
+    - name: Update apt cache separately
+      apt:
+        update_cache: yes
+      become: yes
+
+    - name: Install required packages without update
       apt:
         name:
           - apt-transport-https
@@ -12,7 +17,8 @@
           - gnupg
           - lsb-release
         state: present
-        update_cache: yes
+      become: yes
+
 
     - name: Add Elastic GPG key
       apt_key:
