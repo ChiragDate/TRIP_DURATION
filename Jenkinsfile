@@ -234,7 +234,7 @@ pipeline {
                     keyFileVariable: 'SSH_KEY'
                 )]) {
                     sh '''
-                        ansible-playbook -i ansible/inventory.ini ansible/setup-elk.yaml --private-key=${SSH_KEY}
+                        ansible-playbook -i ansible/inventory.ini ansible/setup-elk.yaml
                     '''
                 }
             }
