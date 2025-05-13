@@ -46,6 +46,7 @@ app = FastAPI(
     description="API for predicting trip durations using machine learning models",
     version="1.0.0"
 )
+model = None
 
 @app.on_event("startup")
 async def startup_event():
