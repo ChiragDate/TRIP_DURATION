@@ -228,15 +228,18 @@ pipeline {
             }
         }
         stage('Setup Monitoring') {
-                steps {
-                    withCredentials([sshUserPrivateKey(credentialsId: 'ansible-ssh-key', keyFileVariable: 'SSH_KEY')]) {
-                        sh '''
-                            # Run Ansible playbooks to set up monitoring
-                            ansible-playbook -i ansible/inventory.yml ansible/setup-elk.yml --private-key=${SSH_KEY}
-                        '''
-                    }
+            steps {
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'ansible-ssh-key',
+                    keyFileVariable: 'SSH_KEY'
+                )]) {
+                    sh '''
+                        ansible-playbook -i ansible/inventory.yml ansible/setup-elk.yml --private-key=${SSH_KEY}
+                    '''
                 }
             }
+        }
+
         }
 
 
