@@ -4,81 +4,28 @@
   become: false
   vars:
     cluster_name: "{{ cluster_name | default('ml-pipeline-cluster') }}"
-    cluster_type: "minikube" 
+    cluster_type: "{{ cluster_type | default('minikube') }}"
 
   tasks:
-    - name: Check if minikube is installed
-      command: which minikube
-      register: minikube_check
+    - name: Check for required dependencies
+      command: "which {{ item }}"
+      register: dependency_check
       ignore_errors: true
       changed_when: false
-      when: cluster_type == "minikube"
+      loop:
+        - "{{ cluster_type }}"
+        - kubectl
 
-    - name: Install minikube if not present
+    - name: Check if cluster exists
       shell: |
-        curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-        sudo install minikube-linux-amd64 /usr/local/bin/minikube
-        rm minikube-linux-amd64
-      when: 
-        - cluster_type == "minikube" 
-        - minikube_check.rc != 0
-
-    - name: Check if kubectl is installed
-      command: which kubectl
-      register: kubectl_check
+        {% if cluster_type == "minikube" %}
+        minikube status -p {{ cluster_name }}
+        {% elif cluster_type == "kind" %}
+        kind get clusters | grep {{ cluster_name }}
+        {% endif %}
+      register: cluster_status
       ignore_errors: true
       changed_when: false
-
-    - name: Install kubectl if not present
-      shell: |
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-        sudo install kubectl /usr/local/bin/kubectl
-        rm kubectl
-      when: kubectl_check.rc != 0
-
-    - name: Check if kind is installed
-      command: which kind
-      register: kind_check
-      ignore_errors: true
-      changed_when: false
-      when: cluster_type == "kind"
-
-    - name: Install kind if not present
-      shell: |
-        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
-        chmod +x ./kind
-        sudo mv ./kind /usr/local/bin/kind
-      when: 
-        - cluster_type == "kind" 
-        - kind_check.rc != 0
-
-    - name: Check if k3s is installed
-      command: which k3s
-      register: k3s_check
-      ignore_errors: true
-      changed_when: false
-      when: cluster_type == "k3s"
-
-    - name: Install k3s if not present
-      shell: |
-        curl -sfL https://get.k3s.io | sh -
-      when: 
-        - cluster_type == "k3s" 
-        - k3s_check.rc != 0
-
-    - name: Check if minikube cluster exists
-      shell: minikube status -p {{ cluster_name }}
-      register: minikube_status
-      ignore_errors: true
-      changed_when: false
-      when: cluster_type == "minikube"
-
-    - name: Check if kind cluster exists
-      shell: kind get clusters | grep {{ cluster_name }}
-      register: kind_status
-      ignore_errors: true
-      changed_when: false
-      when: cluster_type == "kind"
 
     - name: Create minikube cluster
       command: >
@@ -90,7 +37,7 @@
         --addons=dashboard,ingress,metrics-server
       when: 
         - cluster_type == "minikube" 
-        - minikube_status.rc != 0
+        - cluster_status.rc != 0
 
     - name: Create kind cluster
       shell: |
@@ -104,32 +51,24 @@
         EOF
       when: 
         - cluster_type == "kind" 
-        - kind_status.rc != 0
+        - cluster_status.rc != 0
 
-    - name: Get minikube kubeconfig
-      shell: minikube update-context -p {{ cluster_name }} && cat ~/.kube/config
+    - name: Get kubeconfig
+      shell: |
+        {% if cluster_type == "minikube" %}
+        minikube update-context -p {{ cluster_name }} && cat ~/.kube/config
+        {% elif cluster_type == "kind" %}
+        kind get kubeconfig --name {{ cluster_name }}
+        {% endif %}
       register: kubeconfig_content
-      when: cluster_type == "minikube"
-
-    - name: Get kind kubeconfig
-      shell: kind get kubeconfig --name {{ cluster_name }}
-      register: kubeconfig_content
-      when: cluster_type == "kind"
-
-    - name: Get k3s kubeconfig
-      shell: cat /etc/rancher/k3s/k3s.yaml
-      become: true
-      register: kubeconfig_content
-      when: cluster_type == "k3s"
 
     - name: Save kubeconfig to file
       copy:
-        content: "{{ kubeconfig_content.stdout | default('') }}"
+        content: "{{ kubeconfig_content.stdout }}"
         dest: "{{ playbook_dir }}/../kubeconfig"
         mode: '0600'
-      when: kubeconfig_content is defined and kubeconfig_content.stdout is defined
 
-
+    # Verify cluster is running
     - name: Verify cluster is running
       shell: kubectl --kubeconfig={{ playbook_dir }}/../kubeconfig get nodes
       register: node_status
