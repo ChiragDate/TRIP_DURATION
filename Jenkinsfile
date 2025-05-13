@@ -229,14 +229,10 @@ pipeline {
         }
         stage('Setup Monitoring') {
             steps {
-                withCredentials([sshUserPrivateKey(
-                    credentialsId: 'ansible-ssh-key',
-                    keyFileVariable: 'SSH_KEY'
-                )]) {
-                    sh '''
-                        ansible-playbook -i ansible/inventory.ini ansible/setup-elk.yaml
-                    '''
-                }
+                sh '''
+                    ansible-playbook -i ansible/inventory.ini ansible/setup-elk.yaml
+                '''
+
             }
         }
 
