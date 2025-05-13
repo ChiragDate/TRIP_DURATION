@@ -139,6 +139,7 @@ pipeline {
                     # Check if API is running
                     if ! curl -s http://localhost:8000/health; then
                         echo "FASTAPI is not running"
+                        tail -n 20 api.log
                         exit 1
                     fi
                 '''
