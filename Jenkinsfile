@@ -187,7 +187,6 @@ pipeline {
         
         stage('Push Docker Image') {
             steps {
-                // Using withDockerRegistry instead of withCredentials
                 withDockerRegistry([credentialsId: "${DOCKER_CREDENTIALS_ID}", url: '']) {
                     sh """
                         echo "Pushing image to Docker Hub..."

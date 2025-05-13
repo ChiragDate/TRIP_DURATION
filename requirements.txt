@@ -15,4 +15,7 @@ numpy
 httpx
 
 docker
-
+elasticsearch
+filebeat
+kibana
+logstash
