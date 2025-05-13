@@ -1,10 +1,8 @@
----
 - name: Create Kubernetes Cluster
   hosts: localhost
   become: false
   vars:
     cluster_name: "{{ cluster_name | default('ml-pipeline-cluster') }}"
-    cluster_type: "{{ cluster_type | default('minikube') }}"
 
   tasks:
     - name: Check for required dependencies
@@ -13,55 +11,28 @@
       ignore_errors: true
       changed_when: false
       loop:
-        - "{{ cluster_type }}"
+        - minikube
         - kubectl
 
-    - name: Check if cluster exists
-      shell: |
-        {% if cluster_type == "minikube" %}
-        minikube status -p {{ cluster_name }}
-        {% elif cluster_type == "kind" %}
-        kind get clusters | grep {{ cluster_name }}
-        {% endif %}
+    - name: Check if minikube cluster exists
+      shell: "minikube status -p {{ cluster_name }}"
       register: cluster_status
       ignore_errors: true
       changed_when: false
 
     - name: Create minikube cluster
       command: >
-        minikube start 
-        --driver=docker 
-        --cpus=4 
+        minikube start
+        --driver=docker
+        --cpus=4
         --memory=2200mb
-        --profile={{ cluster_name }} 
+        --profile={{ cluster_name }}
         --addons=dashboard,ingress,metrics-server
         --background
-      when: 
-        - cluster_type == "minikube" 
-        - cluster_status.rc != 0
-        
+      when: cluster_status.rc != 0
 
-    - name: Create kind cluster
-      shell: |
-        cat <<EOF | kind create cluster --name {{ cluster_name }} --config=-
-        kind: Cluster
-        apiVersion: kind.x-k8s.io/v1alpha4
-        nodes:
-        - role: control-plane
-        - role: worker
-        - role: worker
-        EOF
-      when: 
-        - cluster_type == "kind" 
-        - cluster_status.rc != 0
-
-    - name: Get kubeconfig
-      shell: |
-        {% if cluster_type == "minikube" %}
-        minikube update-context -p {{ cluster_name }} && cat ~/.kube/config
-        {% elif cluster_type == "kind" %}
-        kind get kubeconfig --name {{ cluster_name }}
-        {% endif %}
+    - name: Get kubeconfig from minikube
+      shell: "minikube update-context -p {{ cluster_name }} && cat ~/.kube/config"
       register: kubeconfig_content
 
     - name: Save kubeconfig to file
