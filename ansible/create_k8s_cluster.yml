@@ -28,7 +28,6 @@
         --memory=2200mb
         --profile={{ cluster_name }}
         --addons=dashboard,ingress,metrics-server
-        --background
       when: cluster_status.rc != 0
 
     - name: Get kubeconfig from minikube
