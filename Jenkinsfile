@@ -57,7 +57,7 @@ pipeline {
                         sh '''
                             cd ${ANSIBLE_PATH}
                             ansible-playbook -i hosts.ini create_k8s_cluster.yml -e "cluster_name=${K8S_CLUSTER_NAME}"
-                                
+
                             # After creating the cluster, store the kubeconfig
                             mkdir -p ~/.kube
                             cp ${ANSIBLE_PATH}/kubeconfig ~/.kube/config
@@ -234,7 +234,7 @@ pipeline {
                     keyFileVariable: 'SSH_KEY'
                 )]) {
                     sh '''
-                        ansible-playbook -i ansible/inventory.yml ansible/setup-elk.yaml --private-key=${SSH_KEY}
+                        ansible-playbook -i ansible/inventory.ini ansible/setup-elk.yaml --private-key=${SSH_KEY}
                     '''
                 }
             }
