@@ -51,10 +51,10 @@ def setup_mock_model():
         yield
 
 def test_home_endpoint():
-    """Test the home endpoint returns expected message."""
     response = client.get("/")
     assert response.status_code == 200
-    assert response.text == '"Working fine"'
+    assert response.json() == {"message": "Trip Duration Prediction API is running"}
+   
 
 def test_predict_endpoint(sample_input_data):
     """Test the prediction endpoint with valid data."""
