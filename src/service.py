@@ -5,7 +5,6 @@ import logging
 import os
 import time
 
-log_path = "/var/lib/jenkins/workspace/TRIP_DURATION/logs/trip-duration-api.log"
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -15,7 +14,7 @@ logging.basicConfig(
     handlers=[
         logging.StreamHandler(),
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        logging.FileHandler(log_path, mode='a+')
+        logging.FileHandler("/var/lib/jenkins/workspace/TRIP_DURATION/logs/trip-duration-api.log", mode='a+')
     ]
 )
 logger = logging.getLogger(__name__)
