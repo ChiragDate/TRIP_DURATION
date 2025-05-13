@@ -134,7 +134,7 @@ pipeline {
                     echo $! > api_pid.txt
 
                     # Wait for API to start
-                    sleep 5
+                    sleep 10
 
                     # Check if API is running
                     if ! curl -s http://localhost:8000/health; then

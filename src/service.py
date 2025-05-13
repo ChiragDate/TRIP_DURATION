@@ -43,7 +43,7 @@ app = FastAPI(
 @app.on_event("startup")
 async def startup_event():
     global model
-    default_path = "/var/lib/jenkins/workspace/TRIP_DURATION/models/model.joblib"
+    default_path = os.path.join(os.getcwd(), "models/model.joblib")
     model_path = os.getenv("MODEL_PATH", default_path)
     logger.info(f"Loading model from {model_path}")
     try:
