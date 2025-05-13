@@ -1,26 +1,30 @@
-from fastapi import FastAPI, HTTPException
-from joblib import load
-from pydantic import BaseModel
 import logging
 import os
 import time
+from fastapi import FastAPI, HTTPException
+from joblib import load
+from pydantic import BaseModel
+
+# Set the log file path manually
+log_path = "/var/lib/jenkins/workspace/TRIP_DURATION/logs/trip-duration-api.log"
+log_dir = os.path.dirname(log_path)
+
+# Ensure the log directory exists
+os.makedirs(log_dir, exist_ok=True)
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    
-    
     handlers=[
         logging.StreamHandler(),
-        log_path.parent.mkdir(parents=True, exist_ok=True)
-        logging.FileHandler("/var/lib/jenkins/workspace/TRIP_DURATION/logs/trip-duration-api.log", mode='a+')
+        logging.FileHandler(log_path, mode='a+')
     ]
 )
+
 logger = logging.getLogger(__name__)
 
 class PredictionInput(BaseModel):
-    # Define the input parameters required for making predictions
     vendor_id: float
     passenger_count: float
     pickup_longitude: float
