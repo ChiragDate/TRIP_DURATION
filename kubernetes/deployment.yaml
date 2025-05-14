@@ -45,7 +45,7 @@ spec:
           periodSeconds: 20
         volumeMounts:
         - name: model-volume
-          mountPath: /app/models
+          mountPath: /models
       volumes:
       - name: model-volume
         persistentVolumeClaim:
