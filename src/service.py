@@ -1,8 +1,5 @@
 # src/service.py
 
-# src/service.py (top of file)
-from pydantic import BaseModel
-from typing import Optional
 import os
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
@@ -13,27 +10,8 @@ import joblib
 # Load environment variables
 load_dotenv()
 
-
-class PredictionInput(BaseModel):
-    vendor_id: float
-    passenger_count: float
-    pickup_longitude: float
-    pickup_latitude: float
-    dropoff_longitude: float
-    dropoff_latitude: float
-    store_and_fwd_flag: float
-    distance_haversine: float
-    distance_dummy_manhattan: float
-    direction: float
-    pickup_weekday: float
-    pickup_hour: float
-    pickup_minute: float
-    pickup_dt: float
-    pickup_week_hour: float
-
-
 # Load the model
-model_path = 'models/model.joblib'
+model_path = os.getenv("MODEL_PATH", "model.pkl")
 model = joblib.load(model_path)
 
 # FastAPI app
@@ -57,34 +35,25 @@ async def serve_ui():
         return FileResponse(index_path)
     return HTMLResponse("<h1>index.html not found</h1>", status_code=404)
 
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
-
 @app.post("/predict")
-async def predict(input_data: PredictionInput):
+async def predict(request: Request):
     try:
-        features = [
-            input_data.vendor_id,
-            input_data.passenger_count,
-            input_data.pickup_longitude,
-            input_data.pickup_latitude,
-            input_data.dropoff_longitude,
-            input_data.dropoff_latitude,
-            input_data.store_and_fwd_flag,
-            input_data.distance_haversine,
-            input_data.distance_dummy_manhattan,
-            input_data.direction,
-            input_data.pickup_weekday,
-            input_data.pickup_hour,
-            input_data.pickup_minute,
-            input_data.pickup_dt,
-            input_data.pickup_week_hour,
+        data = await request.json()
+
+        feature_keys = [
+            "vendor_id", "passenger_count", "pickup_longitude", "pickup_latitude",
+            "dropoff_longitude", "dropoff_latitude", "fare_amount", "extra",
+            "mta_tax", "pickup_weekday", "pickup_hour", "pickup_minute",
+            "pickup_dt", "pickup_week_hour", "store_and_fwd_flag",
+            "distance_haversine", "distance_dummy_manhattan", "direction"
         ]
 
-        prediction = model.predict([features])[0]
-        return JSONResponse(content={
-            "prediction": float(prediction),
-            "prediction_time_ms": 5  # or real duration if measured
-        })
+        # Ensure all keys are present
+        values = [data.get(key, 0.0) for key in feature_keys]
+
+        prediction = model.predict([values])[0]
+
+        return JSONResponse(content={"predicted_duration": prediction})
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
+

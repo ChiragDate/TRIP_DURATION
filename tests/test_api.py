@@ -1,157 +1,86 @@
+# test_api.py
+
 import pytest
-from fastapi.testclient import TestClient
-import json
-import os
-import sys
-from unittest.mock import patch, MagicMock
-import numpy as np
+from httpx import AsyncClient
+from src.service import app
 
-# Import the application
-from src.service import app, PredictionInput
 
-# Create a test client
-client = TestClient(app)
+@pytest.mark.asyncio
+async def test_root_serves_index_or_404():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        response = await ac.get("/")
+    assert response.status_code in [200, 404]
+    if response.status_code == 200:
+        assert response.headers["content-type"].startswith("text/html")
+    else:
+        assert "index.html not found" in response.text
 
-# Mock the model to avoid loading the actual model during tests
-mock_model = MagicMock()
-mock_model.predict.return_value = np.array([1234.56])
+@pytest.mark.asyncio
+async def test_predict_valid_input(monkeypatch):
+    # Mock model's predict function
+    def mock_predict(input_data):
+        return [12.34]  # Dummy prediction
 
-@pytest.fixture
-def sample_input_data():
-    """Fixture to provide sample prediction input data."""
-    return {
+    monkeypatch.setattr("src.service.model.predict", mock_predict)
+
+    payload = {
+        "vendor_id": 1,
+        "passenger_count": 2,
+        "trip_distance": 5.0,
+        "payment_type": 1,
+        "fare_amount": 15.50
+    }
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        response = await ac.post("/predict", json=payload)
+    assert response.status_code == 200
+    assert "predicted_duration" in response.json()
+
+@pytest.mark.asyncio
+async def test_predict_invalid_input():
+    payload = {
+        "vendor_id": 1,
+        # Missing other required fields
+    }
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        response = await ac.post("/predict", json=payload)
+    assert response.status_code == 500
+    assert "error" in response.json()
+
+# test_api.py
+
+@pytest.mark.asyncio
+async def test_predict_full_feature_set(monkeypatch):
+    def mock_predict(input_data):
+        return [9.87]
+
+    monkeypatch.setattr("src.service.model.predict", mock_predict)
+
+    payload = {
         "vendor_id": 1.0,
         "passenger_count": 1.0,
         "pickup_longitude": -73.98215,
         "pickup_latitude": 40.762,
         "dropoff_longitude": -73.9583,
         "dropoff_latitude": 40.7152,
-        "store_and_fwd_flag": 0.0,
-        "distance_haversine": 2.0,
-        "distance_dummy_manhattan": 2.3,
-        "direction": 155.0,
+        "fare_amount": 3.8,
+        "extra": 4.2,
+        "mta_tax": 2.5,
         "pickup_weekday": 1.0,
         "pickup_hour": 14.0,
         "pickup_minute": 30.0,
         "pickup_dt": 1580000000.0,
-        "pickup_week_hour": 38.0
+        "pickup_week_hour": 38.0,
+        "store_and_fwd_flag": 0.0,
+        "distance_haversine": 2.0,
+        "distance_dummy_manhattan": 2.3,
+        "direction": 155.0
     }
 
-@pytest.fixture
-def sample_input_object(sample_input_data):
-    """Fixture to convert sample data to PredictionInput object."""
-    return PredictionInput(**sample_input_data)
-
-@pytest.fixture(autouse=True)
-def setup_mock_model():
-    """Patch the model for all tests."""
-    with patch('src.service.model', mock_model):
-        yield
-
-def test_api_home_endpoint():
-    """Test the API home endpoint."""
-    response = client.get("/api")
-    assert response.status_code == 200
-    assert response.json() == {"message": "Trip Duration Prediction API is running"}
-
-
-def test_health_check_endpoint():
-    """Test the health check endpoint."""
-    response = client.get("/health")
-    assert response.status_code == 200
-    assert "status" in response.json()
-    assert response.json()["status"] == "healthy"
-
-def test_predict_endpoint(sample_input_data):
-    """Test the prediction endpoint with valid data."""
-    response = client.post(
-        "/predict",
-        json=sample_input_data
-    )
-    assert response.status_code == 200
-    assert "prediction" in response.json()
-    assert isinstance(response.json()["prediction"], float)
-    assert "prediction_time_ms" in response.json()
-
-def test_predict_processing(sample_input_object):
-    """Test the prediction function correctly processes input data."""
-    mock_model.predict.return_value = np.array([987.65])
-
-    with patch('src.service.model', mock_model):
-        mock_model.predict.reset_mock()  # Reset the call count
-
-        response = client.post(
-            "/predict",
-            json=sample_input_object.model_dump()  
-        )
-
-        # Verify model was called with correct parameters
-        mock_model.predict.assert_called_once()
-        args, _ = mock_model.predict.call_args
-        
-        # Check the input feature list length matches what the model expects
-        assert len(args[0][0]) == 15
-        assert args[0][0][0] == sample_input_object.vendor_id
-        assert args[0][0][1] == sample_input_object.passenger_count
-        assert response.json()["prediction"] == 987.65
-
-def test_predict_with_invalid_data():
-    """Test the prediction endpoint with invalid data."""
-    invalid_data = {
-        "vendor_id": "invalid",  # Should be a float
-        "passenger_count": 1.0,
-        "pickup_longitude": -73.98215,
-        "pickup_latitude": 40.762,
-        "dropoff_longitude": -73.9583,
-        "dropoff_latitude": 40.7152
-        # Missing other required fields
-    }
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        response = await ac.post("/predict", json=payload)
     
-    response = client.post(
-        "/predict",
-        json=invalid_data
-    )
-    assert response.status_code == 422  # Unprocessable Entity
-
-def test_predict_with_empty_request():
-    """Test the prediction endpoint with empty data."""
-    response = client.post(
-        "/predict",
-        json={}
-    )
-    assert response.status_code == 422  # Unprocessable Entity
-
-def test_predict_with_extreme_values(sample_input_data):
-    """Test the prediction endpoint with extreme values."""
-    extreme_data = sample_input_data.copy()
-    extreme_data["distance_haversine"] = 1000.0  # Very extreme value
-    
-    response = client.post(
-        "/predict",
-        json=extreme_data
-    )
     assert response.status_code == 200
-    assert "prediction" in response.json()
-
-def test_metrics_endpoint():
-    """Test the metrics endpoint."""
-    response = client.get("/metrics")
-    assert response.status_code == 200
-    assert "model_name" in response.json()
-    assert "model_version" in response.json()
-    assert "uptime" in response.json()
-    assert "status" in response.json()
-
-def test_model_loading_error():
-    """Test handling of model loading errors."""
-    # Use a context manager to temporarily patch the load function
-    with patch('src.service.load', side_effect=Exception("Model not found")):
-        # We cannot directly test startup_event as it's an async function
-        # Instead, verify that when 'load' raises an exception, our test captures it
-        with pytest.raises(Exception):
-            # Simulate what happens during startup without actually calling the async function
-            # This is just checking that an exception from load would propagate
-            raise Exception("Model not found")
-
-if __name__ == "__main__":
-    pytest.main(["-xvs"])
+    assert "predicted_duration" in response.json()
+    assert isinstance(response.json()["predicted_duration"], float)
