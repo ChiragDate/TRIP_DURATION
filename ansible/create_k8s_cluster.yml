@@ -29,16 +29,15 @@
 
     - name: Create minikube cluster
       command: >
-        minikube start 
-        --driver=docker 
-        --cpus=4 
+        minikube start
+        --driver=docker
+        --cpus=4
         --memory=2200mb
-        --profile={{ cluster_name }} 
+        --profile={{ cluster_name }}
         --addons=dashboard,ingress,metrics-server
-      when: 
-        - cluster_type == "minikube" 
+      when:
+        - cluster_type == "minikube"
         - cluster_status.rc != 0
-        
 
     - name: Create kind cluster
       shell: |
@@ -50,14 +49,14 @@
         - role: worker
         - role: worker
         EOF
-      when: 
-        - cluster_type == "kind" 
+      when:
+        - cluster_type == "kind"
         - cluster_status.rc != 0
 
-    - name: Get kubeconfig
+    - name: Get cleaned kubeconfig
       shell: |
         {% if cluster_type == "minikube" %}
-        minikube update-context -p {{ cluster_name }} && cat ~/.kube/config
+        minikube kubeconfig -p {{ cluster_name }} | awk '/^apiVersion:/{flag=1} flag'
         {% elif cluster_type == "kind" %}
         kind get kubeconfig --name {{ cluster_name }}
         {% endif %}
