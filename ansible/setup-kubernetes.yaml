@@ -1,4 +1,45 @@
 ---
+- name: Setup Kubernetes Cluster
+  hosts: localhost
+  become: false
+  tasks:
+    - name: Check if cluster exists
+      command: minikube status -p ml-pipeline-cluster
+      register: minikube_status
+      ignore_errors: true
+
+    - name: Set cluster status
+      set_fact:
+        cluster_exists: "{{ minikube_status.rc == 0 }}"
+        cluster_stopped: "{{ 'Stopped' in minikube_status.stdout }}"
+
+    - name: Start existing cluster if stopped
+      command: minikube start -p ml-pipeline-cluster
+      when: minikube_status.rc == 7 and cluster_stopped
+      register: start_result
+
+    - name: Create minikube cluster if it doesn't exist
+      command: minikube start -p ml-pipeline-cluster --memory=4096 --cpus=2
+      when: minikube_status.rc != 0 and minikube_status.rc != 7
+      register: create_result
+
+    - name: Get cleaned kubeconfig
+      command: minikube -p ml-pipeline-cluster kubectl config view --flatten
+      register: kubeconfig_content
+
+    - name: Save kubeconfig to file
+      copy:
+        content: "{{ kubeconfig_content.stdout }}"
+        dest: "{{ playbook_dir }}/../kubeconfig"
+        mode: 0600
+
+    - name: Wait for cluster to be fully operational
+      command: kubectl --kubeconfig={{ playbook_dir }}/../kubeconfig get nodes
+      register: nodes_result
+      until: nodes_result.rc == 0 and nodes_result.stdout != ""
+      retries: 15
+      delay: 10
+
 - name: Install Kubernetes dependencies
   hosts: kubernetes_master:kubernetes_workers
   become: true
@@ -13,33 +54,33 @@
           - lsb-release
         state: present
         update_cache: yes
-
+ 
     - name: Add Docker GPG key
       apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg
         state: present
-
+ 
     - name: Add Docker repository
       apt_repository:
         repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
         state: present
-
+ 
     - name: Install Docker
       apt:
         name: docker-ce
         state: present
         update_cache: yes
-
+ 
     - name: Add Kubernetes GPG key
       apt_key:
         url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
         state: present
-
+ 
     - name: Add Kubernetes repository
       apt_repository:
         repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
         state: present
-
+ 
     - name: Install Kubernetes components
       apt:
         name:
@@ -47,7 +88,7 @@
           - kubeadm
           - kubectl
         state: present
-
+ 
     - name: Enable and start Docker service
       service:
         name: docker
@@ -63,7 +104,7 @@
       register: kubeadm_init
       args:
         creates: /etc/kubernetes/admin.conf
-
+ 
     - name: Create .kube directory for ubuntu user
       file:
         path: /home/ubuntu/.kube
@@ -71,7 +112,7 @@
         owner: ubuntu
         group: ubuntu
         mode: '0755'
-
+ 
     - name: Copy admin.conf to ubuntu user's .kube/config
       copy:
         src: /etc/kubernetes/admin.conf
@@ -80,17 +121,17 @@
         owner: ubuntu
         group: ubuntu
         mode: '0644'
-
+ 
     - name: Install Flannel network plugin
       command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
       become_user: ubuntu
       args:
         creates: /etc/cni/net.d/10-flannel.conflist
-
+ 
     - name: Get join command
       command: kubeadm token create --print-join-command
       register: join_command
-
+ 
     - name: Copy join command to local file
       local_action: copy content="{{ join_command.stdout_lines[0] }}" dest="./join-command"
       become: false
@@ -104,7 +145,7 @@
         src: ./join-command
         dest: /tmp/join-command
         mode: '0777'
-
+ 
     - name: Join the Kubernetes cluster
       command: sh /tmp/join-command
       args:
