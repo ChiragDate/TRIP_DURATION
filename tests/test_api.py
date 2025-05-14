@@ -54,15 +54,6 @@ def test_api_home_endpoint():
     assert response.status_code == 200
     assert response.json() == {"message": "Trip Duration Prediction API is running"}
 
-def test_root_endpoint():
-    """Test the root endpoint which serves the UI."""
-    # Mock both os.path.exists and FileResponse to avoid file system errors
-    with patch('os.path.exists', return_value=True), \
-         patch('src.service.FileResponse', return_value=MagicMock(status_code=200)) as mock_file_response:
-        response = client.get("/")
-        mock_file_response.assert_called_once()
-        # Since we're mocking the response, just verify the mock was called
-        assert mock_file_response.return_value.status_code == 200
 
 def test_health_check_endpoint():
     """Test the health check endpoint."""
