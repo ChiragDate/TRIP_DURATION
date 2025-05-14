@@ -11,7 +11,7 @@ import joblib
 load_dotenv()
 
 # Load the model
-model_path = os.getenv("MODEL_PATH", "model.pkl")
+model_path = 'models/model.joblib'
 model = joblib.load(model_path)
 
 # FastAPI app
