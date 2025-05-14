@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: trip-duration-api
-        image: docker.io/chiragd02/trip-duration-api:latest
+        image: image: docker.io/chiragd02/trip_duration:latest
         ports:
         - containerPort: 8000
         resources:
