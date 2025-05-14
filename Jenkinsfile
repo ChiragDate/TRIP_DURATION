@@ -211,8 +211,8 @@ pipeline {
                     } else {
                         sh '''
                             # Replace placeholders in Kubernetes manifests
-                            sed -i "s|\${DOCKER_REGISTRY}|${DOCKER_REGISTRY}|g" kubernetes/deployment.yaml
-                            sed -i "s|\${IMAGE_TAG}|${IMAGE_TAG}|g" kubernetes/deployment.yaml
+                            sed -i "s|\\${DOCKER_REGISTRY}|${DOCKER_REGISTRY}|g" kubernetes/deployment.yaml
+                            sed -i "s|\\${IMAGE_TAG}|${IMAGE_TAG}|g" kubernetes/deployment.yaml
                             
                             # Apply Kubernetes manifests using default kubeconfig
                             kubectl apply -f kubernetes/pvc.yaml
@@ -226,6 +226,7 @@ pipeline {
                 }
             }
         }
+
         stage('Setup Monitoring') {
             steps {
                 sh '''
