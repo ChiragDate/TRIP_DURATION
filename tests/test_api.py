@@ -7,7 +7,7 @@ from unittest.mock import patch, MagicMock
 import numpy as np
 
 # Import the application
-from src.service import app, PredictionInput
+from service import app, PredictionInput
 
 # Create a test client
 client = TestClient(app)
