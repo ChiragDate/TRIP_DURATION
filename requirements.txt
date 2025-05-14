@@ -13,6 +13,7 @@ pyyaml>=6.0
 pytest
 numpy
 httpx
+pytest-asyncio
 
 docker
 elasticsearch
