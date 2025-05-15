@@ -255,12 +255,5 @@ pipeline {
 
         }
 
-    }
+}
     
-    post {
-        always {
-            echo "Pipeline completed"
-            // Uncomment if you want workspace cleanup
-            // cleanWs()
-        }
-    }
