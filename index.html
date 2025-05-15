@@ -1,324 +1,257 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trip Duration Predictor</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="text"],
-        input[type="number"],
-        input[type="datetime-local"] {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            width: 100%;
-            margin-top: 10px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 4px;
-            background-color: #f0f0f0;
-            display: none;
-        }
-        .result.show {
-            display: block;
-        }
-        .error {
-            color: #ff0000;
-            margin-top: 10px;
-        }
-        .loading {
-            text-align: center;
-            margin-top: 20px;
-            display: none;
-        }
-        .cols-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trip Duration Predictor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="datetime-local"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4caf50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+      margin-top: 10px;
+    }
+    button:hover:not(:disabled) {
+      background-color: #45a049;
+    }
+    button:disabled {
+      background-color: #9ccc9c;
+      cursor: not-allowed;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+      background-color: #f0f0f0;
+      display: none;
+    }
+    .result.show {
+      display: block;
+    }
+    .error {
+      color: #ff0000;
+      margin-top: 10px;
+    }
+    .loading {
+      text-align: center;
+      margin-top: 20px;
+      display: none;
+    }
+    .cols-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Trip Duration Predictor</h1>
-        
-        <form id="predictionForm">
-            <div class="form-group">
-                <label for="id">Trip ID:</label>
-                <input type="text" id="id" placeholder="Enter trip ID">
-            </div>
-            
-            <div class="form-group">
-                <label for="vendor_id">Vendor ID:</label>
-                <input type="number" id="vendor_id" placeholder="Enter vendor ID" value="1" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="pickup_datetime">Pickup Date & Time:</label>
-                <input type="datetime-local" id="pickup_datetime" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="passenger_count">Passenger Count:</label>
-                <input type="number" id="passenger_count" placeholder="Enter passenger count" value="1" min="1" required>
-            </div>
-            
-            <div class="cols-2">
-                <div class="form-group">
-                    <label for="pickup_longitude">Pickup Longitude:</label>
-                    <input type="number" id="pickup_longitude" placeholder="e.g. -73.982" step="0.000001" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="pickup_latitude">Pickup Latitude:</label>
-                    <input type="number" id="pickup_latitude" placeholder="e.g. 40.742" step="0.000001" required>
-                </div>
-            </div>
-            
-            <div class="cols-2">
-                <div class="form-group">
-                    <label for="dropoff_longitude">Dropoff Longitude:</label>
-                    <input type="number" id="dropoff_longitude" placeholder="e.g. -73.991" step="0.000001" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="dropoff_latitude">Dropoff Latitude:</label>
-                    <input type="number" id="dropoff_latitude" placeholder="e.g. 40.756" step="0.000001" required>
-                </div>
-            </div>
-            
-            <button type="submit">Predict Trip Duration</button>
-        </form>
-        
-        <div class="loading" id="loading">
-            <p>Calculating trip duration...</p>
+  <div class="container">
+    <h1>Trip Duration Predictor</h1>
+
+    <form id="predictionForm">
+      <div class="form-group">
+        <label for="vendor_id">Vendor ID:</label>
+        <input type="number" id="vendor_id" placeholder="Enter vendor ID" value="1" required />
+      </div>
+
+      <div class="form-group">
+        <label for="passenger_count">Passenger Count:</label>
+        <input type="number" id="passenger_count" placeholder="Enter passenger count" value="1" min="1" required />
+      </div>
+
+      <div class="form-group">
+        <label for="pickup_datetime">Pickup Date & Time:</label>
+        <input type="datetime-local" id="pickup_datetime" required />
+      </div>
+
+      <div class="form-group">
+        <label for="dropoff_datetime">Dropoff Date & Time:</label>
+        <input type="datetime-local" id="dropoff_datetime" required />
+      </div>
+
+      <div class="cols-2">
+        <div class="form-group">
+          <label for="pickup_longitude">Pickup Longitude:</label>
+          <input type="number" id="pickup_longitude" placeholder="e.g. -73.982" step="0.000001" required />
         </div>
-        
-        <div class="result" id="result">
-            <h3>Prediction Result:</h3>
-            <p id="durationResult"></p>
-            <p id="durationMinutes"></p>
+
+        <div class="form-group">
+          <label for="pickup_latitude">Pickup Latitude:</label>
+          <input type="number" id="pickup_latitude" placeholder="e.g. 40.742" step="0.000001" required />
         </div>
-        
-        <div class="error" id="error"></div>
+      </div>
+
+      <div class="cols-2">
+        <div class="form-group">
+          <label for="dropoff_longitude">Dropoff Longitude:</label>
+          <input type="number" id="dropoff_longitude" placeholder="e.g. -73.991" step="0.000001" required />
+        </div>
+
+        <div class="form-group">
+          <label for="dropoff_latitude">Dropoff Latitude:</label>
+          <input type="number" id="dropoff_latitude" placeholder="e.g. 40.756" step="0.000001" required />
+        </div>
+      </div>
+
+      <button type="submit">Predict Trip Duration</button>
+    </form>
+
+    <div class="loading" id="loading">
+      <p>Calculating trip duration...</p>
     </div>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set default date time to current
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.getElementById('pickup_datetime').value = now.toISOString().slice(0, 16);
-            
-            // Default NYC coordinates
-            document.getElementById('pickup_longitude').value = '-73.9812';
-            document.getElementById('pickup_latitude').value = '40.7648';
-            document.getElementById('dropoff_longitude').value = '-73.9708';
-            document.getElementById('dropoff_latitude').value = '40.7617';
-            
-            // Form submission
-            document.getElementById('predictionForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // Hide previous results and errors
-                document.getElementById('result').classList.remove('show');
-                document.getElementById('error').textContent = '';
-                document.getElementById('loading').style.display = 'block';
-                
-                // Get form values
-                const vendor_id = parseFloat(document.getElementById('vendor_id').value);
-                const pickupDatetime = new Date(document.getElementById('pickup_datetime').value);
-                const passenger_count = parseFloat(document.getElementById('passenger_count').value);
-                const pickup_longitude = parseFloat(document.getElementById('pickup_longitude').value);
-                const pickup_latitude = parseFloat(document.getElementById('pickup_latitude').value);
-                const dropoff_longitude = parseFloat(document.getElementById('dropoff_longitude').value);
-                const dropoff_latitude = parseFloat(document.getElementById('dropoff_latitude').value);
-                
-                // Calculate derived features
-                const features = calculateFeatures(
-                    pickupDatetime,
-                    pickup_longitude, pickup_latitude,
-                    dropoff_longitude, dropoff_latitude
-                );
-                
-                // Prepare request payload
-                const payload = {
-                    vendor_id: vendor_id,
-                    passenger_count: passenger_count,
-                    pickup_longitude: pickup_longitude,
-                    pickup_latitude: pickup_latitude,
-                    dropoff_longitude: dropoff_longitude,
-                    dropoff_latitude: dropoff_latitude,
-                    store_and_fwd_flag: 0,
-                    distance_haversine: features.distance_haversine,
-                    distance_dummy_manhattan: features.distance_dummy_manhattan,
-                    direction: features.direction,
-                    pickup_weekday: features.pickup_weekday,
-                    pickup_hour: features.pickup_hour,
-                    pickup_minute: features.pickup_minute,
-                    pickup_dt: features.pickup_dt,
-                    pickup_week_hour: features.pickup_week_hour
-                };
-                
-                // Make API request
-                fetch('/predict', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('result').classList.add('show');
-                    
-                    // Display results
-                    const seconds = Math.round(data.prediction);
-                    const minutes = Math.floor(seconds / 60);
-                    const remainingSeconds = seconds % 60;
-                    
-                    document.getElementById('durationResult').textContent = `Estimated trip duration: ${seconds} seconds`;
-                    document.getElementById('durationMinutes').textContent = `(${minutes} minutes and ${remainingSeconds} seconds)`;
-                })
-                .catch(error => {
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('error').textContent = `Error: ${error.message}. Make sure the API server is running.`;
-                });
-            });
-        });
-        
-        // Calculate features needed for prediction
-        function calculateFeatures(pickupDatetime, pickup_long, pickup_lat, dropoff_long, dropoff_lat) {
-            // Calculate distance features
-            const distance_haversine = haversineDistance(
-                pickup_lat, pickup_long, 
-                dropoff_lat, dropoff_long
-            );
-            
-            const distance_dummy_manhattan = manhattanDistance(
-                pickup_lat, pickup_long, 
-                dropoff_lat, dropoff_long
-            );
-            
-            const direction = bearingCalculation(
-                pickup_lat, pickup_long, 
-                dropoff_lat, dropoff_long
-            );
-            
-            // Calculate date/time features
-            const pickup_weekday = pickupDatetime.getDay();
-            const pickup_hour = pickupDatetime.getHours();
-            const pickup_minute = pickupDatetime.getMinutes();
-            
-            // For pickup_dt, we need a base date to calculate seconds from
-            // Using Jan 1, 2016 as arbitrary base for NYC taxi trips
-            const baseDate = new Date('2016-01-01T00:00:00');
-            const pickup_dt = (pickupDatetime - baseDate) / 1000; // seconds
-            
-            const pickup_week_hour = pickup_weekday * 24 + pickup_hour;
-            
-            return {
-                distance_haversine,
-                distance_dummy_manhattan,
-                direction,
-                pickup_weekday,
-                pickup_hour,
-                pickup_minute,
-                pickup_dt,
-                pickup_week_hour
-            };
+
+    <div class="result" id="result">
+      <h3>Prediction Result:</h3>
+      <p id="durationResult"></p>
+    </div>
+
+    <div class="error" id="error"></div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // Set default pickup and dropoff datetime to current and current + 15 minutes
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      document.getElementById("pickup_datetime").value = now.toISOString().slice(0, 16);
+
+      const dropoffDefault = new Date(now.getTime() + 15 * 60 * 1000);
+      document.getElementById("dropoff_datetime").value = dropoffDefault.toISOString().slice(0, 16);
+
+      // Default NYC coordinates
+      document.getElementById("pickup_longitude").value = "-73.9812";
+      document.getElementById("pickup_latitude").value = "40.7648";
+      document.getElementById("dropoff_longitude").value = "-73.9708";
+      document.getElementById("dropoff_latitude").value = "40.7617";
+
+      const form = document.getElementById("predictionForm");
+      const submitBtn = form.querySelector('button[type="submit"]');
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        // Hide previous results and errors
+        document.getElementById("result").classList.remove("show");
+        document.getElementById("error").textContent = "";
+        document.getElementById("loading").style.display = "block";
+        submitBtn.disabled = true;
+
+        // Get form values
+        const vendor_id = parseInt(document.getElementById("vendor_id").value);
+        const passenger_count = parseInt(document.getElementById("passenger_count").value);
+        const pickup_datetime = document.getElementById("pickup_datetime").value;
+        const dropoff_datetime = document.getElementById("dropoff_datetime").value;
+        const pickup_longitude = parseFloat(document.getElementById("pickup_longitude").value);
+        const pickup_latitude = parseFloat(document.getElementById("pickup_latitude").value);
+        const dropoff_longitude = parseFloat(document.getElementById("dropoff_longitude").value);
+        const dropoff_latitude = parseFloat(document.getElementById("dropoff_latitude").value);
+
+        // Basic validation
+        if (!pickup_datetime || !dropoff_datetime) {
+          showError("Pickup and dropoff datetime are required.");
+          return;
         }
-        
-        // Haversine distance calculation
-        function haversineDistance(lat1, lon1, lat2, lon2) {
-            const toRad = value => value * Math.PI / 180;
-            const R = 6371; // Earth's radius in km
-            
-            const dLat = toRad(lat2 - lat1);
-            const dLon = toRad(lon2 - lon1);
-            
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
-                    Math.sin(dLon/2) * Math.sin(dLon/2);
-            
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            const distance = R * c;
-            
-            return distance;
+
+        if (
+          isNaN(vendor_id) ||
+          isNaN(passenger_count) ||
+          isNaN(pickup_longitude) ||
+          isNaN(pickup_latitude) ||
+          isNaN(dropoff_longitude) ||
+          isNaN(dropoff_latitude)
+        ) {
+          showError("Please enter valid numeric values for vendor ID, passenger count, and coordinates.");
+          return;
         }
-        
-        // Manhattan distance calculation
-        function manhattanDistance(lat1, lon1, lat2, lon2) {
-            const a = haversineDistance(lat1, lon1, lat1, lon2);
-            const b = haversineDistance(lat1, lon1, lat2, lon1);
-            return a + b;
+
+        // Construct payload — send raw input, backend handles features
+        const payload = {
+          vendor_id: vendor_id,
+          passenger_count: passenger_count,
+          pickup_datetime: pickup_datetime,
+          dropoff_datetime: dropoff_datetime,
+          pickup_longitude: pickup_longitude,
+          pickup_latitude: pickup_latitude,
+          dropoff_longitude: dropoff_longitude,
+          dropoff_latitude: dropoff_latitude,
+        };
+
+        fetch("/predict", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`Network response was not ok (status: ${response.status})`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            document.getElementById("loading").style.display = "none";
+            submitBtn.disabled = false;
+            if (data && data.predicted_duration !== undefined) {
+              document.getElementById("durationResult").textContent = `Predicted Trip Duration: ${data.predicted_duration} seconds`;
+              document.getElementById("result").classList.add("show");
+            } else {
+              showError("No prediction returned from server.");
+            }
+          })
+          .catch((error) => {
+            document.getElementById("loading").style.display = "none";
+            submitBtn.disabled = false;
+            showError("Error: " + error.message);
+          });
+
+        function showError(msg) {
+          document.getElementById("error").textContent = msg;
+          document.getElementById("loading").style.display = "none";
+          submitBtn.disabled = false;
         }
-        
-        // Bearing calculation
-        function bearingCalculation(lat1, lon1, lat2, lon2) {
-            const toRad = value => value * Math.PI / 180;
-            const toDeg = value => value * 180 / Math.PI;
-            
-            const dLon = toRad(lon2 - lon1);
-            
-            const y = Math.sin(dLon) * Math.cos(toRad(lat2));
-            const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) - 
-                      Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(dLon);
-            
-            let bearing = Math.atan2(y, x);
-            bearing = toDeg(bearing);
-            bearing = (bearing + 360) % 360;
-            
-            return bearing;
-        }
-    </script>
+      });
+    });
+  </script>
 </body>
 </html>

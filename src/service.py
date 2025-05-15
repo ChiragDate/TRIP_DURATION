@@ -6,6 +6,9 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import joblib
+from feature_definitions import feature_build
+from datetime import datetime
+
 
 # Load environment variables
 load_dotenv()
@@ -43,28 +46,51 @@ async def serve_ui():
         return FileResponse(index_path)
     return HTMLResponse("<h1>index.html not found</h1>", status_code=404)
 
+    @app.get("/health")
+    def health_check():
+        return {"status": "ok"}
+    
+    
+    do_not_train = [
+    'id', 'pickup_datetime', 'dropoff_datetime', 'check_trip_duration',
+    'pickup_date', 'avg_speed_h', 'avg_speed_m',
+    'pickup_lat_bin', 'pickup_long_bin', 'center_lat_bin', 'center_long_bin',
+    'pickup_dt_bin', 'pickup_datetime_group'
+]
+
 @app.post("/predict")
 async def predict(request: Request):
     try:
         data = await request.json()
 
-        feature_keys = [
-            "vendor_id", "passenger_count", "pickup_longitude", "pickup_latitude",
-            "dropoff_longitude", "dropoff_latitude", "fare_amount", "extra",
-            "mta_tax", "pickup_weekday", "pickup_hour", "pickup_minute",
-            "pickup_dt", "pickup_week_hour", "store_and_fwd_flag",
-            "distance_haversine", "distance_dummy_manhattan", "direction"
-        ]
+        input_dict = {
+            "id": 0,
+            "vendor_id": data.get("vendor_id", 1),
+            "pickup_datetime": data.get("pickup_datetime"),
+            "dropoff_datetime": data.get("dropoff_datetime"),
+            "passenger_count": data.get("passenger_count", 1),
+            "pickup_longitude": data.get("pickup_longitude", 0.0),
+            "pickup_latitude": data.get("pickup_latitude", 0.0),
+            "dropoff_longitude": data.get("dropoff_longitude", 0.0),
+            "dropoff_latitude": data.get("dropoff_latitude", 0.0),
+            "store_and_fwd_flag": 0,
+            "trip_duration": 0
+        }
 
-        # Ensure all keys are present
-        values = [data.get(key, 0.0) for key in feature_keys]
+        if input_dict['pickup_datetime'] and 'T' in input_dict['pickup_datetime']:
+            input_dict['pickup_datetime'] = input_dict['pickup_datetime'].replace('T', ' ')
 
-        prediction = model.predict([values])[0]
+        if input_dict['dropoff_datetime'] and 'T' in input_dict['dropoff_datetime']:
+            input_dict['dropoff_datetime'] = input_dict['dropoff_datetime'].replace('T', ' ')
 
-        return JSONResponse(content={"predicted_duration": prediction})
+        df = pd.DataFrame([input_dict])
+        df_feat = feature_build(df)
+
+        features = [f for f in df_feat.columns if f not in do_not_train]
+
+        prediction = model.predict(df_feat[features])[0]
+
+        return JSONResponse(content={"predicted_duration": float(prediction)})
+
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
-
-    @app.get("/health")
-    def health_check():
-        return {"status": "ok"}
