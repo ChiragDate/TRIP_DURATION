@@ -68,12 +68,6 @@
         dest: "{{ playbook_dir }}/../kubeconfig"
         mode: '0600'
 
-    - name: Verify cluster is running
-      shell: kubectl --kubeconfig={{ playbook_dir }}/../kubeconfig get nodes
-      register: node_status
-      retries: 10
-      delay: 5
-      until: node_status.rc == 0
 
     - name: Display cluster information
       debug:
