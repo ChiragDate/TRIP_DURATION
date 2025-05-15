@@ -26,7 +26,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-STATIC_DIR = os.path.join(os.getcwd(), "src", "static")
+STATIC_DIR = os.path.join(os.getcwd(), "static")
+print(f"Static files directory: {STATIC_DIR}")
 
 @app.get("/", response_class=FileResponse)
 async def serve_ui():
