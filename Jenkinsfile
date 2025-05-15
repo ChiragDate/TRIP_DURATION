@@ -221,6 +221,28 @@ pipeline {
                 }
             }
         }
+        stage('Port Forward Service') {
+        steps {
+            script {
+                echo "Port forwarding service to access FastAPI at localhost:8000"
+                
+                // Run port-forward in the background
+                sh '''
+                    nohup kubectl port-forward svc/trip-duration-api-service 8000:80 > port_forward.log 2>&1 &
+                    echo $! > port_forward_pid.txt
+                    sleep 5
+
+                    # Verify if port-forward is active
+                    if ! nc -z localhost 8000; then
+                        echo "Port forwarding failed"
+                        tail -n 20 port_forward.log
+                        exit 1
+                    fi
+                '''
+            }
+        }
+    }
+
 
         // stage('Setup Monitoring') {
         //     steps {
