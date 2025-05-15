@@ -26,10 +26,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+STATIC_DIR = os.path.join(os.getcwd(), "src", "static")
 
 @app.get("/", response_class=FileResponse)
 async def serve_ui():
-    index_path = 'src/static/index.html'
+    index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
     return HTMLResponse("<h1>index.html not found</h1>", status_code=404)
