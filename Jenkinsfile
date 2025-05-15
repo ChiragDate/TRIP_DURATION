@@ -214,18 +214,18 @@ pipeline {
                 }
             }
         }
-        stage('Port Forward Service') {
-        steps {
-            script {
-                echo "Port forwarding service to access FastAPI at localhost:8000"
+    //     stage('Port Forward Service') {
+    //     steps {
+    //         script {
+    //             echo "Port forwarding service to access FastAPI at localhost:8000"
                 
-                // Run port-forward in the background
-                sh '''
-                    nohup kubectl port-forward svc/trip-duration-api-service 8000:80
-                '''
-            }
-        }
-    }
+    //             // Run port-forward in the background
+    //             sh '''
+    //                 nohup kubectl port-forward svc/trip-duration-api-service 8000:80
+    //             '''
+    //         }
+    //     }
+    // }
 
 
         // stage('Setup Monitoring') {
