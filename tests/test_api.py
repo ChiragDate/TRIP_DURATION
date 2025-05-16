@@ -1,86 +1,171 @@
-# test_api.py
+# tests/test_api.py
 
-import pytest
-from httpx import AsyncClient
-from src.service import app
+import unittest
+import requests
+import json
+import os
+import sys
+from datetime import datetime
 
+# Add project root to path for imports if needed
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-@pytest.mark.asyncio
-async def test_root_serves_index_or_404():
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.get("/")
-    assert response.status_code in [200, 404]
-    if response.status_code == 200:
-        assert response.headers["content-type"].startswith("text/html")
-    else:
-        assert "index.html not found" in response.text
+# API endpoint URL - change this as needed
+API_URL = "http://localhost:8000"
 
-@pytest.mark.asyncio
-async def test_predict_valid_input(monkeypatch):
-    # Mock model's predict function
-    def mock_predict(input_data):
-        return [12.34]  # Dummy prediction
-
-    monkeypatch.setattr("src.service.model.predict", mock_predict)
-
-    payload = {
-        "vendor_id": 1,
-        "passenger_count": 2,
-        "trip_distance": 5.0,
-        "payment_type": 1,
-        "fare_amount": 15.50
-    }
-
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.post("/predict", json=payload)
-    assert response.status_code == 200
-    assert "predicted_duration" in response.json()
-
-@pytest.mark.asyncio
-async def test_predict_invalid_input():
-    payload = {
-        "vendor_id": 1,
-        # Missing other required fields
-    }
-
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.post("/predict", json=payload)
-    assert response.status_code == 500
-    assert "error" in response.json()
-
-# test_api.py
-
-@pytest.mark.asyncio
-async def test_predict_full_feature_set(monkeypatch):
-    def mock_predict(input_data):
-        return [9.87]
-
-    monkeypatch.setattr("src.service.model.predict", mock_predict)
-
-    payload = {
-        "vendor_id": 1.0,
-        "passenger_count": 1.0,
-        "pickup_longitude": -73.98215,
-        "pickup_latitude": 40.762,
-        "dropoff_longitude": -73.9583,
-        "dropoff_latitude": 40.7152,
-        "fare_amount": 3.8,
-        "extra": 4.2,
-        "mta_tax": 2.5,
-        "pickup_weekday": 1.0,
-        "pickup_hour": 14.0,
-        "pickup_minute": 30.0,
-        "pickup_dt": 1580000000.0,
-        "pickup_week_hour": 38.0,
-        "store_and_fwd_flag": 0.0,
-        "distance_haversine": 2.0,
-        "distance_dummy_manhattan": 2.3,
-        "direction": 155.0
-    }
-
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.post("/predict", json=payload)
+class TestTripDurationAPI(unittest.TestCase):
+    """Test cases for the Trip Duration Predictor API"""
     
-    assert response.status_code == 200
-    assert "predicted_duration" in response.json()
-    assert isinstance(response.json()["predicted_duration"], float)
+    def setUp(self):
+        """Set up test fixtures"""
+        # Sample test data based on the reference values
+        self.sample_data = {
+            "vendor_id": 1,
+            "passenger_count": 1,
+            "pickup_datetime": "2023-05-16T12:00:00",
+            "pickup_longitude": -73.9812,
+            "pickup_latitude": 40.7648,
+            "dropoff_longitude": -73.9708,
+            "dropoff_latitude": 40.7617
+        }
+        
+        # Expected results from the reference
+        self.expected_duration = 12348  # seconds
+        self.expected_minutes = 205
+        self.expected_seconds = 48
+
+    def test_api_health(self):
+        """Test if the API health endpoint is responding"""
+        response = requests.get(f"{API_URL}/health")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["status"], "ok")
+
+    def test_prediction_with_sample_data(self):
+        """Test prediction with sample data matching the reference values"""
+        response = requests.post(
+            f"{API_URL}/predict",
+            json=self.sample_data
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        
+        # Check if prediction field exists
+        self.assertIn("prediction", data)
+        
+        # Check if the value is close to the expected value
+        # Using a tolerance range since model outputs might vary slightly
+        self.assertAlmostEqual(
+            data["prediction"], 
+            self.expected_duration,
+            delta=60  # Allow up to 60 seconds difference
+        )
+        
+        # Check formatted time
+        self.assertIn("formatted_time", data)
+        formatted_time = data["formatted_time"]
+        
+        # Verify the formatted time contains the expected minutes and seconds
+        self.assertIn(str(self.expected_minutes), formatted_time)
+        self.assertIn(str(self.expected_seconds), formatted_time)
+
+    def test_prediction_with_missing_fields(self):
+        """Test prediction with missing required fields"""
+        # Remove a required field (pickup_longitude)
+        incomplete_data = self.sample_data.copy()
+        del incomplete_data["pickup_longitude"]
+        
+        response = requests.post(
+            f"{API_URL}/predict",
+            json=incomplete_data
+        )
+        
+        # Should return an error
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertIn("error", data)
+
+    def test_prediction_with_invalid_data_types(self):
+        """Test prediction with invalid data types"""
+        # Use string instead of number for passenger_count
+        invalid_data = self.sample_data.copy()
+        invalid_data["passenger_count"] = "not_a_number"
+        
+        response = requests.post(
+            f"{API_URL}/predict",
+            json=invalid_data
+        )
+        
+        # Should return an error
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertIn("error", data)
+
+    def test_prediction_with_extreme_values(self):
+        """Test prediction with extreme but valid values"""
+        # Use extreme values for coordinates (still within NYC area)
+        extreme_data = self.sample_data.copy()
+        extreme_data["pickup_longitude"] = -74.05
+        extreme_data["pickup_latitude"] = 40.85
+        extreme_data["dropoff_longitude"] = -73.75
+        extreme_data["dropoff_latitude"] = 40.65
+        
+        response = requests.post(
+            f"{API_URL}/predict",
+            json=extreme_data
+        )
+        
+        # Should still work, even with extreme values
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("prediction", data)
+        
+        # Prediction should be a positive number
+        self.assertTrue(data["prediction"] > 0)
+
+    def test_prediction_with_optional_fields(self):
+        """Test prediction with optional fields included"""
+        # Add dropoff_datetime
+        data_with_optional = self.sample_data.copy()
+        data_with_optional["dropoff_datetime"] = "2023-05-16T15:30:00"
+        
+        response = requests.post(
+            f"{API_URL}/predict",
+            json=data_with_optional
+        )
+        
+        # Should work with optional fields
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("prediction", data)
+
+    def test_prediction_batch(self):
+        """Test multiple predictions to check consistency"""
+        results = []
+        
+        # Make 3 identical requests and store results
+        for _ in range(3):
+            response = requests.post(
+                f"{API_URL}/predict",
+                json=self.sample_data
+            )
+            self.assertEqual(response.status_code, 200)
+            results.append(response.json()["prediction"])
+        
+        # All predictions should be identical (deterministic model)
+        self.assertEqual(len(set(results)), 1, "Predictions should be consistent for identical inputs")
+
+    def test_frontend_serving(self):
+        """Test if the frontend is being served correctly"""
+        response = requests.get(API_URL)
+        self.assertEqual(response.status_code, 200)
+        # Check if content is HTML
+        self.assertIn("text/html", response.headers.get("content-type", ""))
+        # Basic check for HTML content
+        self.assertIn("<html", response.text.lower())
+        self.assertIn("trip duration predictor", response.text.lower())
+
+
+if __name__ == "__main__":
+    unittest.main()

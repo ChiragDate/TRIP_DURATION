@@ -140,31 +140,21 @@ pipeline {
         }
 
         
-        // stage('Test API') {
-        //     steps {
-        //         sh '''
-        //             . ${VENV_PATH}/bin/activate
+        stage('Test API') {
+            steps {
+                sh '''
+                    . ${VENV_PATH}/bin/activate
                     
-        //             # Run API tests
-        //             python -m pytest ${WORK}/tests/test_api.py -v
+                    # Run API tests
+                    python -m pytest ${WORK}/tests/test_api.py -v
                     
-        //             # Test with a sample prediction request
-        //             curl -s -X POST http://localhost:8000/predict \
-        //             -H "Content-Type: application/json" \
-        //             --data-binary "@/var/lib/jenkins/workspace/TRIP_DURATION/tests/sample_request.json" \
-        //             | tee prediction_output.json
-
-
                     
-        //             # Validate the prediction output format
-        //             python -c "import json; data = json.load(open('prediction_output.json')); assert 'prediction' in data, 'Missing prediction key in response'"
-                    
-        //             # Cleanup API process
-        //             kill $(cat api_pid.txt)
-        //             rm api_pid.txt
-        //         '''
-        //     }
-        // }
+                    # Cleanup API process
+                    kill $(cat api_pid.txt)
+                    rm api_pid.txt
+                '''
+            }
+        }
         
         stage('Build Docker Image') {
             steps {
