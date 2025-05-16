@@ -148,10 +148,7 @@ pipeline {
                     # Run API tests
                     python -m pytest ${WORK}/tests/test_api.py -v
                     
-                    
-                    # Cleanup API process
-                    kill $(cat api_pid.txt)
-                    rm api_pid.txt
+
                 '''
             }
         }
