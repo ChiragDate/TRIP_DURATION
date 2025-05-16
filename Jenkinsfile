@@ -230,14 +230,14 @@ pipeline {
             }
         }
 
-        // stage('Setup Monitoring') {
-        //     steps {
-        //         sh '''
-        //             ansible-playbook -i ansible/inventory.ini ansible/setup-elk.yaml
-        //         '''
+        stage('Setup Monitoring') {
+            steps {
+                sh '''
+                    ansible-playbook -i ansible/inventory.ini ansible/setup-elk.yaml
+                '''
 
-        //     }
-        // }
+            }
+        }
     }
     
         }
