@@ -240,26 +240,6 @@ pipeline {
         // }
     }
     
-    post {
-        always {
-            echo 'Cleaning up resources...'
-            
-            // Clean up port forwarding process
-            sh '''
-                if [ -f port-forward.pid ]; then
-                    echo "Stopping port forwarding process..."
-                    kill $(cat port-forward.pid) || true
-                    rm port-forward.pid
-                fi
-            '''
-            
-            // Other cleanup steps as needed
-        }
-    }
-
-
-
         }
 
-}
     
