@@ -65,7 +65,7 @@
     - name: Save kubeconfig to file
       copy:
         content: "{{ kubeconfig_content.stdout }}"
-        dest: "{{ playbook_dir }}/../kubeconfig"
+        dest: "{{ playbook_dir }}/kubeconfig"
         mode: '0600'
 
 
