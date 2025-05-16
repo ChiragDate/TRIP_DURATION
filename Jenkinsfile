@@ -201,19 +201,34 @@ pipeline {
                 }
             }
         }
-    //     stage('Port Forward Service') {
-    //     steps {
-    //         script {
-    //             echo "Port forwarding service to access FastAPI at localhost:8000"
-                
-    //             // Run port-forward in the background
-    //             sh '''
-    //                 nohup kubectl port-forward svc/trip-duration-api-service 8000:80
-    //             '''
-    //         }
-    //     }
-    // }
-
+            stage('Port Forward Service') {
+            steps {
+                script {
+                    echo "Port forwarding service to access FastAPI at localhost:8000"
+                    
+                    // Kill any existing port-forward processes
+                    sh '''
+                        pkill -f "kubectl port-forward svc/trip-duration-api-service" || true
+                    '''
+                    
+                    // Run port-forward in the background with nohup and redirect output
+                    sh '''
+                        nohup kubectl port-forward svc/trip-duration-api-service 8000:80 > port-forward.log 2>&1 &
+                        echo "Port forwarding started in background. Access service at http://localhost:8000"
+                        echo $! > port-forward.pid
+                        # Give it a moment to establish the connection
+                        sleep 5
+                        # Check if port forwarding is actually running
+                        if ps -p $(cat port-forward.pid) > /dev/null; then
+                            echo "Port forwarding is running successfully"
+                        else
+                            echo "Warning: Port forwarding process may have failed to start"
+                            cat port-forward.log
+                        fi
+                    '''
+                }
+            }
+        }
 
         // stage('Setup Monitoring') {
         //     steps {
@@ -223,6 +238,26 @@ pipeline {
 
         //     }
         // }
+    }
+    
+    post {
+        always {
+            echo 'Cleaning up resources...'
+            
+            // Clean up port forwarding process
+            sh '''
+                if [ -f port-forward.pid ]; then
+                    echo "Stopping port forwarding process..."
+                    kill $(cat port-forward.pid) || true
+                    rm port-forward.pid
+                fi
+            '''
+            
+            // Other cleanup steps as needed
+        }
+    }
+
+
 
         }
 
