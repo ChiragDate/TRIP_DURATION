@@ -14,6 +14,7 @@ pipeline {
         KUBECONFIG_ID = "kubeconfig-credentials"
         ANSIBLE_PATH = "${WORKSPACE}/ansible"
         K8S_CLUSTER_NAME = "ml-pipeline-cluster"
+        KUBECONFIG = "${WORKSPACE}/kubeconfig"
     }
     
     stages {
