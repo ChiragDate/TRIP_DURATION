@@ -2,9 +2,13 @@
 - name: Install ELK Stack
   hosts: elk_stack
   become: true
-
   tasks:
-    - name: Install required packages with retry and cache update
+    - name: Update apt cache separately
+      apt:
+        update_cache: yes
+      become: yes
+
+    - name: Install required packages
       apt:
         name:
           - apt-transport-https
@@ -14,10 +18,8 @@
           - lsb-release
         state: present
         update_cache: yes
-      retries: 5
-      delay: 10
-      register: result
-      until: result is succeeded
+      become: yes
+
 
     - name: Add Elastic GPG key
       apt_key:
@@ -28,8 +30,7 @@
       apt_repository:
         repo: deb https://artifacts.elastic.co/packages/8.x/apt stable main
         state: present
-        filename: elastic-8.x
-
+        
     - name: Increase virtual memory for Elasticsearch
       sysctl:
         name: vm.max_map_count
