@@ -117,6 +117,7 @@ pipeline {
                     else
                         echo "Model not found - starting training process"
                         python3 ${WORK}/src/models/train_model.py ${WORK}/data/processed/train.csv ${WORK}/models
+                        dvc push
                     fi
                 '''
             }
