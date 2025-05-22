@@ -41,7 +41,7 @@ if __name__ == '__main__':
     print("We have %i features to train." %len(feature_names))
     
     train_data = train_data[feature_names]
-    test_data = test_data[feature_names] 
+    test_data = train_data[feature_names] 
     
     save_data(train_data, test_data, output_path)
 
