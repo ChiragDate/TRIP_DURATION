@@ -4,7 +4,7 @@ import numpy as np
 
 def haversine_array(lat1, lng1, lat2, lng2):
     lat1, lng1, lat2, lng2 = map(np.radians, (lat1, lng1, lat2, lng2))
-    AVG_EARTH_RADIUS = 6371  # in km
+    AVG_EARTH_RADIUS = 6371 
     lat = lat2 - lat1
     lng = lng2 - lng1
     d = np.sin(lat * 0.5) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(lng * 0.5) ** 2
@@ -17,7 +17,7 @@ def dummy_manhattan_distance(lat1, lng1, lat2, lng2):
     return a + b
 
 def bearing_array(lat1, lng1, lat2, lng2):
-    AVG_EARTH_RADIUS = 6371  # in km
+    AVG_EARTH_RADIUS = 6371  
     lng_delta_rad = np.radians(lng2 - lng1)
     lat1, lng1, lat2, lng2 = map(np.radians, (lat1, lng1, lat2, lng2))
     y = np.sin(lng_delta_rad) * np.cos(lat2)
@@ -44,7 +44,6 @@ def create_dist_features(df):
     
 def test_feature_build(df):  
     
-    # just for local checking if it works feature_build to be used in other codes
     
     datetime_feature_fix(df)
     create_dist_features(df)

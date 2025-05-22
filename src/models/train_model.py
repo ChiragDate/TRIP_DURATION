@@ -9,13 +9,11 @@ from sklearn.ensemble import RandomForestRegressor
 
 
 def train_model(train_features, target, n_estimators, max_depth, seed):
-    # Train your machine learning model
     model = RandomForestRegressor(n_estimators=n_estimators, max_depth=max_depth, random_state=seed)
     model.fit(train_features, target)
     return model
 
 def save_model(model, output_path):
-    # Save the trained model to the specified output path
     joblib.dump(model, output_path + '/model.joblib')
 
 def main():

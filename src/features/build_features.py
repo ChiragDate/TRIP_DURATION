@@ -11,7 +11,7 @@ def load_data(load_path):
     df = pd.read_csv(load_path)
     return df
 
-def split_data(df,test_size,seed):  #train and validation set split
+def split_data(df,test_size,seed):  
     train,test = train_test_split(df, test_size=test_size, random_state=seed)
     return train,test
 
@@ -25,10 +25,8 @@ if __name__ == '__main__':
     homedir = currdir.parent.parent.parent
     path = sys.argv[1]
 
-    # data_path = home_dir.as_posix() +"/" + input_file
     trainpath = path + 'train.csv'
     testpath = path + 'test.csv'
-    # testpath = '/var/lib/jenkins/workspace/Trip_Duration/data/raw/test.csv'
     
     train_data = pd.read_csv(trainpath)
     test_data = pd.read_csv(testpath)
@@ -43,7 +41,7 @@ if __name__ == '__main__':
     print("We have %i features to train." %len(feature_names))
     
     train_data = train_data[feature_names]
-    test_data = train_data[feature_names] #validation data
+    test_data = test_data[feature_names] 
     
     save_data(train_data, test_data, output_path)
 

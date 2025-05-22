@@ -2,7 +2,6 @@ pipeline {
     agent any
     
     environment {
-        // Define environment variables
         PYTHON_VERSION = '3.12.3'
         DVC_MODELS_DIR = "/home/chirag/Projects/TRIP-DURATION-MODELS"
         VENV_PATH = "${WORKSPACE}/trip_duration_venv"
@@ -44,7 +43,6 @@ pipeline {
                 script {
                     def clusterExists = false
 
-                    // Try to get the cluster info using default kubeconfig
                     try {
                         def status = sh(script: "kubectl cluster-info", returnStatus: true)
                         clusterExists = (status == 0)
@@ -207,12 +205,10 @@ pipeline {
                 script {
                     echo "Port forwarding service to access FastAPI at localhost:8000"
                     
-                    // Kill any existing port-forward processes
                     sh '''
                         pkill -f "kubectl port-forward svc/trip-duration-api-service" || true
                     '''
                     
-                    // Run port-forward in the background with nohup and redirect output
                     sh '''
                         nohup kubectl port-forward svc/trip-duration-api-service 8000:80 > port-forward.log 2>&1 &
                         echo "Port forwarding started in background. Access service at http://localhost:8000"
