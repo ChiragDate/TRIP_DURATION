@@ -3,10 +3,14 @@
   hosts: elk_stack
   become: true
   tasks:
-    - name: Update apt cache separately
+    - name: Update apt cache (non-fatal if it fails initially)
       apt:
         update_cache: yes
-      become: yes
+      register: apt_update_result
+      retries: 3
+      delay: 5
+      until: apt_update_result is succeeded
+      failed_when: false
 
     - name: Install required packages
       apt:
@@ -18,8 +22,6 @@
           - lsb-release
         state: present
         update_cache: yes
-      become: yes
-
 
     - name: Add Elastic GPG key
       apt_key:
@@ -30,7 +32,12 @@
       apt_repository:
         repo: deb https://artifacts.elastic.co/packages/8.x/apt stable main
         state: present
-        
+        filename: elastic-8.x
+
+    - name: Refresh apt cache after adding repo
+      apt:
+        update_cache: yes
+
     - name: Increase virtual memory for Elasticsearch
       sysctl:
         name: vm.max_map_count
@@ -42,7 +49,6 @@
       apt:
         name: elasticsearch
         state: present
-        update_cache: yes
 
     - name: Configure Elasticsearch
       template:
