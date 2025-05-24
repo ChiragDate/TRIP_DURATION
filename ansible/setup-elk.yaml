@@ -22,6 +22,7 @@
           - lsb-release
         state: present
         update_cache: yes
+        failed_when: false
 
     - name: Add Elastic GPG key
       apt_key:
